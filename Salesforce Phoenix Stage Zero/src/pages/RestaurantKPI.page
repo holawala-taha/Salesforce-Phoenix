@@ -1,0 +1,935 @@
+<apex:page standardController="Account" standardStylesheets="true" applyHtmlTag="false" applyBodyTag="false" sidebar="false" showHeader="false" docType="html-5.0" extensions="CtrRestaurantKPI">
+<html>
+<head>
+    <title>Restaurant KPI</title>
+    <link rel="stylesheet" type="text/css" href="{!URLFOR($Resource.slds222, 'assets/styles/salesforce-lightning-design-system-vf.css')}"/>
+    <style>
+        td.fieldName, #kpisTable th {
+            font-weight: bold;
+        }
+
+        table.slds-table--col-bordered td,
+        table.slds-table--col-bordered th {
+            border-left: 1px solid #d8dde6;
+            border-right: 1px solid #d8dde6;
+        }
+
+        .kpiSeparator {
+            background: #f4f6f9 !important;
+        }
+
+        /* used to display units of measure in KPIs table */
+        .percentage::after {
+            content: " %";
+        }
+
+        .seconds::after {
+            content: " sec";
+        }
+    </style>
+</head>
+<body>
+    <!-- i didn't use vue to handle all this page because it doesn't work well
+    with apex form and inputFields -->
+    
+    <apex:form id="myForm">
+        <div class="slds">
+            
+            <!-- ********** MAIN GRID START ********** -->
+            <div class="slds-grid slds-wrap slds-theme--shade slds-size--1-of-1">
+
+                <!-- unassign button -->
+                <div class="slds-col slds-size--1-of-1 slds-p-right--small slds-p-top--small">
+                    <button type="button" class="slds-button slds-button--destructive slds-float--right" onclick="unassignRestaurant()">Unassign Restaurant</button>
+                </div>
+                
+                <!-- ********** ACCOUNT DETAIL TABLE ********** -->
+                <c:Default_RKPIAccountDetail record="{!Account}" restaurantOwnerName="{!ownerName}" />
+                <!-- ********** ACCOUNT DETAIL END ********** -->
+                
+
+                <!-- ********** LOG A CALL FORM START ********** -->
+                <div id="logCallCol" class="slds-size--1-of-2 slds-box">
+                    <div class="slds-p-horizontal--small">
+                        <div class="slds-text-heading--medium slds-text-align--left slds-p-around--small">
+                            Log a call
+                        </div>
+                        <apex:actionRegion >
+
+                            <apex:actionStatus id="openSpinner" onstart="vueSpinnerHandler.toggle()" />
+                            <apex:actionFunction name="logCallRequestAf" action="{!logCallRequest}" reRender="logCallPanel, msgPanel1" oncomplete="vueSpinnerHandler.close()" />
+                            <apex:actionFunction name="logCallAf" action="{!logCall}" oncomplete="sendCallToBackEnd()" status="openSpinner" reRender="msgPanel1" />
+                            
+                            <apex:outputPanel id="logCallPanel" layout="block">
+
+                                <!-- form grid  -->
+                                <div class="slds-grid slds-wrap">
+
+                                    <!-- call type -->
+                                    <div class="slds-col slds-size--1-of-2">
+                                        <div class="slds-form-element slds-p-around--small">
+                                          <div class="slds-form-element__control">
+                                              <label class="slds-form-element__label" for="callType">
+                                                  {!$ObjectType.Task.fields.Type.Label}
+                                              </label>
+                                              <div class="slds-form-element__control">
+                                                <input id="callType" disabled="true" class="slds-input" value="{!callTask.Type}" />
+                                              </div>
+                                          </div>
+                                        </div>
+                                    </div>
+
+                                    <div class="slds-col slds-size--1-of-2">
+                                        <!-- just for alignment  -->
+                                    </div>
+
+                                    <!-- call subject -->
+                                    <div class="slds-col slds-size--12-of-12 slds-large-size--6-of-12">
+                                        <div class="slds-form-element slds-p-around--small">
+                                            <div class="slds-form-element__control">
+                                                <label class="slds-form-element__label slds-truncate" for="{!$Component.callSubject}">
+                                                    <abbr class="slds-required" title="required">*</abbr>
+                                                    {!$ObjectType.Task.fields.Activity_Subject__c.Label}
+                                                </label>
+                                                <div class="slds-select_container">
+                                                    <apex:inputField value="{!callTask.Activity_Subject__c}" id="callSubject" required="true" styleClass="slds-select">
+                                                        <apex:actionSupport event="onchange" reRender="callTopicPanel" />
+                                                    </apex:inputField>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    
+                                    <!-- next call time -->
+                                    <div class="slds-col slds-size--6-of-12 slds-large-size--3-of-12">
+                                        <div class="slds-form-element slds-p-around--small">
+                                            <div class="slds-form-element__control">
+                                                <label id="nextCallLabel" class="slds-form-element__label slds-truncate" for="{!$Component.nextcall}">
+                                                    <abbr class="slds-required slds-hide" title="required">*</abbr>
+                                                    {!$ObjectType.Task.fields.Next_Call_Time__c.Label}
+                                                </label>
+                                                <div class="slds-select_container">
+                                                    <apex:inputField value="{!callTask.Next_Call_Time__c}" id="nextcall" styleClass="slds-input" html-disabled="true" />
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div class="slds-col slds-size--6-of-12 slds-large-size--3-of-12">
+                                        <!-- just for alignment  -->
+                                    </div>
+
+                                    <!-- topic -->
+                                    <div class="slds-col slds-size--12-of-12">
+                                        <div class="slds-form-element slds-p-around--small slds-scrollable--x">
+                                            <label id="callTopicLabel" class="slds-form-element__label" for="{!$Component.callTopic}">
+                                                <abbr class="slds-required" title="required">*</abbr>{!$ObjectType.Task.fields.Topis_Discussed__c.Label}
+                                            </label>
+                                            
+                                            <!--
+                                                    This is because in case of error when saving the call, don't ask me why,
+                                                    dependent values are not refreshed...
+
+                                                    Using an output panel here allows the action support on
+                                                    callSubject to refresh this picklist
+                                            -->
+                                            <apex:outputPanel layout="block" id="callTopicPanel" styleClass="slds-form-element__control multiselectContainer">
+                                                <apex:inputField value="{!callTask.Topis_Discussed__c}" id="callTopic" />
+                                                <!-- this script must remain here -->
+                                                <script type="text/javascript">
+                                                    // add lightning style to topic multiselect picklist
+                                                    (function () {
+                                                        if (typeof adjustMultiselectPicklist === "function") {
+                                                            setTimeout(function() {
+                                                                adjustMultiselectPicklist();
+                                                                vueSpinnerHandler.close();
+                                                            }, 500);
+                                                        }
+                                                    }());
+                                                </script>
+                                            </apex:outputPanel>
+                                        </div>
+                                    </div>
+                                    
+                                    <!-- comments -->
+                                    <div class="slds-col slds-size--1-of-1">
+                                        <div class="slds-form-element slds-p-around--small">
+                                            <label class="slds-form-element__label" for="{!$Component.callDescription}">
+                                                <abbr class="slds-required" title="required">*</abbr>
+                                                {!$ObjectType.Task.fields.Description.Label}
+                                            </label>
+                                            <div class="slds-form-element__control">
+                                                <apex:inputTextArea value="{!callTask.Description}" id="callDescription" styleClass="slds-textarea" />
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <!-- form footer -->
+                                    <div class="slds-size--1-of-1 slds-align--absolute-center">
+                                        <button type="button" onclick="saveButtonOnClick(this)" class="slds-button slds-button--brand">Save</button>
+                                        <button type="button" onclick="CaseModalManager.toggleForm()" class="slds-button slds-button--brand">Create Follow Up Case</button>
+                                    </div>
+                                </div>
+                            </apex:outputPanel>
+                        </apex:actionRegion>
+                    </div>
+                </div>
+                <!-- ********** LOG A CALL FORM END ********** -->
+
+                <!-- ********** KPI TABLE, FAILED ORDERS TABLE, RQ TASKS TABLE START ********** -->
+                <div id="tabsCol" class="slds-col slds-size--1-of-2">
+                    <div class="slds-tabs--scoped">
+
+                        <!-- tabs definition -->
+                        <ul class="slds-tabs--scoped__nav" role="tablist">
+                            <li class="slds-tabs--scoped__item slds-text-title--caps slds-active" title="KPIs" role="presentation">
+                                <a class="slds-tabs--scoped__link" onclick="handleTabClick(this);" role="tab" tabindex="0" aria-selected="false" aria-controls="tab-scoped-1" id="tab-scoped-1__item">KPIs</a>
+                            </li>
+                            <li class="slds-tabs--scoped__item slds-text-title--caps " title="Failed Orders" role="presentation" >
+                                <a class="slds-tabs--scoped__link" onclick="handleTabClick(this);" role="tab" tabindex="-1" aria-selected="false" aria-controls="tab-scoped-2" id="tab-scoped-2__item">Failed Orders</a>
+                            </li>
+                            <li class="slds-tabs--scoped__item slds-text-title--caps" title="RQ Tasks" role="presentation">
+                                <a class="slds-tabs--scoped__link" onclick="handleTabClick(this);" role="tab" tabindex="-1" aria-selected="false" aria-controls="tab-scoped-3" id="tab-scoped-3__item">RQ Tasks</a>
+                            </li>
+                        </ul>
+                        
+                        <!-- KPI tab content -->
+                        <div id="tab-scoped-1" class="slds-tabs--scoped__content slds-scrollable slds-show" role="tabpanel" aria-labelledby="tab-scoped-1__item">
+                            <div class="slds-col slds-size--1-of-1">
+                                <table id="kpisTable" class="slds-table slds-table--bordered slds-table--cell-buffer slds-table--col-bordered">
+                                    <tbody>
+                                        <!-- do not add code here, it's populated by printKPIsTable function -->
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                        
+                        <!-- Failed orders tab content -->
+                        <div id="tab-scoped-2" class="slds-tabs--scoped__content slds-scrollable slds-hide" role="tabpanel" aria-labelledby="tab-scoped-2__item">
+                            <div class="slds-col slds-size--1-of-1">
+                                <table id="failedOrderTable" class="slds-table slds-table--bordered slds-table--cell-buffer" >
+                                    <thead>
+                                        <tr class="slds-text-title--caps">
+                                            <th scope="col">
+                                                <div class="slds-truncate" title="Order Date">Order Id</div>
+                                            </th>
+                                            <th scope="col">
+                                                <div class="slds-truncate" title="Payment Method">Payment Method</div>
+                                            </th>
+                                            <th   scope="col">
+                                                <div class="slds-truncate" title="Order Id">Order Date</div>
+                                            </th>
+                                            <th scope="col">
+                                                <div class="slds-truncate" title="Basket Size">Basket Size</div>
+                                            </th>
+                                            <th scope="col">
+                                                <div class="slds-truncate" title="Delivery Post Code">Delivery Post Code</div>
+                                            </th>
+                                            <th scope="col">
+                                                <div class="slds-truncate" title="Restaurant Response Time"> Response Time</div>
+                                            </th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                            <!-- DO NOT add code here, it's populated by the printOrderFailedTable function -->
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+
+                        <!-- RQ tasks tab content -->
+                        <div id="tab-scoped-3" class="slds-tabs--scoped__content slds-scrollable slds-hide" role="tabpanel" aria-labelledby="tab-scoped-3__item">
+                            <div class="slds-col slds-size--1-of-1">
+                                <table id="rqTasksTable" class="slds-table slds-table--bordered slds-table--cell-buffer" >
+                                    <thead>
+                                        <tr class="slds-text-title--caps">
+                                            <th scope="col">
+                                                <div class="slds-truncate" title="{!$ObjectType.Task.fields.TaskSubtype.Label}">
+                                                    {!$ObjectType.Task.fields.TaskSubtype.Label}
+                                                </div>
+                                            </th>
+                                            <th scope="col">
+                                                <div class="slds-truncate" title="{!$ObjectType.Task.fields.Activity_Subject__c.Label}">
+                                                    {!$ObjectType.Task.fields.Activity_Subject__c.Label}
+                                                </div>
+                                            </th>
+                                            <th   scope="col">
+                                                <div class="slds-truncate" title="{!$ObjectType.Task.fields.CreatedDate.Label}">
+                                                    {!$ObjectType.Task.fields.CreatedDate.Label}
+                                                </div>
+                                            </th>
+                                            <th scope="col">
+                                                <div class="slds-truncate" title="{!$ObjectType.Task.fields.OwnerId.Label}">
+                                                    {!$ObjectType.Task.fields.OwnerId.Label}
+                                                </div>
+                                            </th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                            <!-- DO NOT add code here, it's populated by the getRQCalls function -->
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
+                <!-- ********** KPI TABLE, FAILED ORDERS TABLE, RQ TASKS TABLE END ********** -->
+            </div>
+            <!-- ********** MAIN GRID END ********** -->
+            
+            <!-- ********** FOLLOW UP CASE MODAL FORM START ********** -->
+            <div id="caseModal" aria-hidden="true">
+                
+                <!-- modal window -->
+                <div role="dialog" tabindex="-1" aria-labelledby="caseModalTitle" class="slds-modal">
+                    <div class="slds-modal__container">
+
+                        <!-- header  -->
+                        <div class="slds-modal__header">
+                            <h2 id="caseModalTitle" class="slds-text-heading--medium">Create Follow Up Case</h2>
+                        </div>
+                        
+                        <!-- modal content -->
+                        <div class="slds-modal__content">
+                            <apex:actionRegion >
+
+                                <apex:actionStatus id="loading" onstart="vueSpinnerHandler.toggle()" onstop="vueSpinnerHandler.toggle()" />
+                                <apex:actionFunction name="createFollowUpCaseAf" action="{!createFollowUpCase}" status="loading" reRender="followUpCasePanel, msgPanel1" oncomplete="CaseModalManager.afterSaveHandler();" />
+                                
+                                <!-- form grid  -->
+                                <apex:outputPanel id="followUpCasePanel" layout="block" styleClass="slds-grid slds-wrap slds-p-around--small">
+                                    
+                                    <!-- case record type -->
+                                    <div class="slds-form-element slds-size--1-of-1 slds-p-around--small">
+                                        <div class="slds-form-element__control">
+                                            <label class="slds-form-element__label" for="{!$Component.caseRtype}">
+                                                <abbr class="slds-required" title="required">*</abbr>
+                                                {!$ObjectType.Case.fields.RecordTypeId.Label}
+                                            </label>
+                                            <div class="slds-select_container">
+                                                <apex:actionRegion >
+                                                    <apex:inputField value="{!followUpCase.RecordTypeId}" id="caseRtype" required="true" styleClass="slds-select">
+                                                        <apex:actionSupport event="onchange" reRender="caseType, CaseReason" />
+                                                    </apex:inputField>
+                                                </apex:actionRegion>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <!-- case type -->
+                                    <div class="slds-form-element slds-size--1-of-2 slds-p-around--small">
+                                        <div class="slds-form-element__control">
+                                            <label class="slds-form-element__label" for="{!$Component.caseType}">
+                                                <abbr class="slds-required" title="required">*</abbr>
+                                                {!$ObjectType.Case.fields.Type.Label}
+                                            </label>
+                                            <div class="slds-select_container">
+                                                <apex:inputField value="{!followUpCase.Type}" id="caseType" required="true" styleClass="slds-select" />
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <!-- case Reason -->
+                                    <div class="slds-form-element slds-size--1-of-2 slds-p-around--small">
+                                        <div class="slds-form-element__control">
+                                            <label class="slds-form-element__label" for="{!$Component.CaseReason}">
+                                                <abbr class="slds-required" title="required">*</abbr>
+                                                {!$ObjectType.Case.fields.Reason.Label}
+                                            </label>
+                                            <div class="slds-select_container">
+                                                <apex:inputField value="{!followUpCase.Case_Reason__c}" id="CaseReason" required="true" styleClass="slds-select" />
+                                            </div>
+                                        </div>
+                                    </div>
+                                    
+                                    <!-- case subject -->
+                                    <div class="slds-form-element slds-size--1-of-2 slds-p-around--small">
+                                        <div class="slds-form-element__control">
+                                            <label class="slds-form-element__label" for="{!$Component.caseSubject}">
+                                                <abbr class="slds-required" title="required">*</abbr>
+                                                {!$ObjectType.Case.fields.Subject.Label}
+                                            </label>
+                                            <div class="slds-form-element__control">
+                                                <apex:inputField id="caseSubject" styleClass="slds-input" value="{!followUpCase.Subject}" />
+                                            </div>
+                                        </div>
+                                    </div>
+                                    
+                                    <!-- case origin (read only) -->
+                                    <div class="slds-form-element slds-size--1-of-2 slds-p-around--small">
+                                      <div class="slds-form-element__control">
+                                          <label class="slds-form-element__label" for="caseOrigin">
+                                              <abbr class="slds-required" title="required">*</abbr>
+                                              {!$ObjectType.Case.fields.Origin.Label}
+                                          </label>
+                                          <div class="slds-form-element__control">
+                                            <input id="caseOrigin" disabled="true" class="slds-input" value="{!followUpCase.Origin}" />
+                                          </div>
+                                      </div>
+                                    </div>
+                                    
+                                    <!-- case description -->
+                                    <div class="slds-form-element slds-size--1-of-1 slds-p-around--small">
+                                        <div class="slds-form-element__control">
+                                            <label class="slds-form-element__label" for="{!$Component.caseDescription}">{!$ObjectType.Case.fields.Description.Label}</label>
+                                            <div class="slds-form-element__control">
+                                                <apex:inputTextArea value="{!followUpCase.Description}" id="caseDescription" styleClass="slds-textarea" />
+                                            </div>
+                                        </div>
+                                    </div>
+                                </apex:outputPanel>
+                            </apex:actionRegion>
+                        </div>
+
+                        <!-- footer -->
+                        <div class="slds-modal__footer">
+                            <button type="button" onclick="CaseModalManager.toggleForm();" class="slds-button slds-button--neutral">Cancel</button>
+                            <button type="button" onclick="createFollowUpCaseAf();" class="slds-button slds-button--brand">Save</button>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- modal backdrop -->
+                <div class="slds-backdrop"></div>
+            </div>
+            <!-- ********** FOLLOW UP CASE MODAL FORM END ********** -->
+            
+        </div>
+    </apex:form>
+    
+    <script src="/support/console/38.0/integration.js" type="text/javascript"></script>
+    <script src="../../soap/ajax/40.0/connection.js" type="text/javascript"></script>
+    <script src="{!URLFOR($Resource.jq211)}" ></script>
+    <script src="{!URLFOR($Resource.DHHConsoleToolkit, 'js/ConsoleToolkit.js')}" type="text/javascript"></script>
+    <script src="{!URLFOR($Resource.Vue)}"></script>
+    <script>
+        var j$ = jQuery.noConflict();
+
+        var DHH = new DHHConsoleToolkit();
+
+        // Timeout
+        Visualforce.remoting.timeout = 120000;
+
+        function unassignRestaurant() {
+            vueSpinnerHandler.toggle();
+
+            // Remote action
+            Visualforce.remoting.Manager.invokeAction(
+                '{!$RemoteAction.CtrRestaurantKPI.unassignRestaurant}',
+                "{!Account.Id}",
+                "{!Account.Record_Country__c}",
+                function(result, event) {
+                    if (sforce.console.isInConsole()) {
+                        sforce.console.getFocusedPrimaryTabId(function(response) {
+                            if (response.success) {
+                                sforce.console.closeTab(response.id);
+                            }
+                        });
+                    } else {
+                        history.back();
+                    }
+                }, {
+                    escape: false
+                }
+            );
+        }
+
+        function sendCallToBackEnd() {
+            if (!msgHandler1.isInError()) {
+                logCallRequestAf();
+            } else {
+                // close spinner
+                vueSpinnerHandler.close();
+            }
+        }
+
+        function isTopicRequired(subjectVal) {
+            return ["Call - Decision maker reached"].indexOf(subjectVal) >= 0;
+        }
+
+        function isNextDateRequired(subjectVal) {
+            return ["Call Back Requested"].indexOf(subjectVal) >= 0;
+        }
+
+        function isCommentsRequired(subjectVal) {
+            return ["Call - Nobody reached"].indexOf(subjectVal) < 0;
+        }
+
+        function saveButtonOnClick(self) {
+            var subject = j$("[id$=callSubject]").val();
+
+            // checks topic field
+            if (isTopicRequired(subject) && !j$("[id$=callTopic_selected] option").size()) {
+                msgHandler1.setError({
+                    msg: "Please insert at least one {!$ObjectType.Task.fields.Topis_Discussed__c.label}",
+                    type: "warning"
+                });
+                return;
+            }
+
+            // checks next call date field
+            if (isNextDateRequired(subject) && !j$("[id$=nextcall]").val()) {
+                msgHandler1.setError({
+                    msg: "Please insert {!$ObjectType.Task.fields.Next_Call_Time__c.label}",
+                    type: "warning"
+                });
+                return;
+            }
+
+            // checks comment
+            if (isCommentsRequired(subject) && !j$("[id$=callDescription]").val()) {
+                msgHandler1.setError({
+                    msg: "Please insert {!$ObjectType.Task.fields.Description.label}",
+                    type: "warning"
+                });
+                return;
+            }
+
+            // post phone call
+            logCallAf();
+        }
+
+        var CaseModalManager = (function() {
+            return {
+                toggleForm: function() {
+                    var $formWrap = j$("#caseModal");
+
+                    if ($formWrap.attr("aria-hidden") === "true") {
+                        $formWrap.find(".slds-backdrop").addClass("slds-backdrop--open");
+                        $formWrap.find(".slds-modal").addClass("slds-fade-in-open");
+                        $formWrap.attr("aria-hidden", "false");
+                    } else {
+                        $formWrap.find(".slds-backdrop").removeClass("slds-backdrop--open");
+                        $formWrap.find(".slds-modal").removeClass("slds-fade-in-open");
+                        $formWrap.attr("aria-hidden", "true");
+                    }
+
+                    return this;
+                },
+                afterSaveHandler: function() {
+                    if (msgHandler1.isInError()) {
+                        // does nothing if case was not saved
+                        return this;
+                    }
+
+                    // toggle the whole form
+                    return this.toggleForm();
+                }
+            }
+        }());
+
+        /**
+        handle the click on tab elements in order to display proper content
+        */
+        function handleTabClick(elem) {
+            var $tabContent = j$("#" + j$(elem).attr("aria-controls"));
+            var $activeTab = j$(elem).closest("li.slds-tabs--scoped__item");
+            var $inactiveTabs = $activeTab.siblings("li.slds-tabs--scoped__item");
+
+            // set others tab as inactive
+            $inactiveTabs.each(function() {
+                j$(this).removeClass('slds-active')
+            });
+
+            // hide others tab content
+            $tabContent.siblings("div.slds-tabs--scoped__content")
+                .removeClass("slds-show")
+                .addClass("slds-hide");
+
+            // set clicked tab as active
+            $activeTab.addClass('slds-active');
+            // display tab content
+            $tabContent
+                .removeClass("slds-hide")
+                .addClass("slds-show");
+        }
+
+        function getGenericTBodyTd(elem, colLabel, key, cb) {
+            return j$("<td>")
+                .attr("data-label", colLabel)
+                .append(
+                    j$("<div>")
+                    .addClass("slds-truncate")
+                    .attr("title", elem[key])
+                    .append(function() {
+                        if (cb) {
+                            return j$("<a>")
+                                .attr("href", "")
+                                .html(elem[key])
+                                .click(function(event) {
+                                    event.preventDefault();
+                                    cb(elem);
+                                });
+                        } else {
+                            return elem[key];
+                        }
+                    })
+                );
+        }
+
+        /**
+        print the restaurant table.
+        @param data JSON object containing all restaurants to be displayed
+        */
+        function printKPIsTable(data) {
+
+            /**
+            return a jquery object representing a th element to be inserted into a thead
+            followiing lighthening guidlines
+            */
+            function getTheadTh(elem) {
+                return j$("<th>")
+                    .attr("scope", "col")
+                    .append(
+                        j$("<div>")
+                        .attr("title", elem.description)
+                        .html(elem.description)
+                    );
+            }
+
+            /**
+            return a jquery object representing a td element to be inserted into a tbody
+            followiing lighthening guidlines
+            */
+            function getTBodyTd(elem) {
+                return j$("<td>")
+                    .attr("data-label", elem.value)
+                    .append(
+                        j$("<div>")
+                        .addClass("slds-truncate")
+                        .addClass(elem.type)
+                        .attr("title", elem.value)
+                        .html(elem.value)
+                    );
+            }
+
+            // build the table
+            for (var i = 0; i < data.restaurant.kpis.length; i++) {
+                var kpi = data.restaurant.kpis[i];
+
+                // checks if has to append separator
+                if (i && kpi.description[0] !== data.restaurant.kpis[i - 1].description[0]) {
+                    // append separator
+                    j$("#kpisTable tbody").append(
+                        j$("<tr>").append(
+                            j$("<td>")
+                            .attr("colspan", "2")
+                            .addClass("kpiSeparator")
+                        )
+                    );
+                }
+
+                // append kpi row to table
+                j$("#kpisTable tbody").append(
+                    j$("<tr>").append([
+                        getTheadTh(kpi),
+                        getTBodyTd(kpi)
+                    ])
+                );
+            }
+        }
+
+        function printOrderFailedTable(data) {
+            if (!data || !data.orders) {
+                console.log("no element to display");
+                return;
+            }
+
+            // build the table
+            for (var i = 0; i < data.orders.length; i++) {
+                var order = data.orders[i];
+                order.order_date = new Date(order.order_date).toLocaleString();
+                j$("#failedOrderTable tbody").append(
+                    j$("<tr>").append(
+                        [
+                            getGenericTBodyTd(order, "Order Id", "order_id"),
+                            getGenericTBodyTd(order, "Payment Method", "payment_method"),
+                            getGenericTBodyTd(order, "Order Date", "order_date"),
+                            getGenericTBodyTd(order, "Basket Size", "basket_size"),
+                            getGenericTBodyTd(order, "Delivery Post Code", "delivery_postcode"),
+                            getGenericTBodyTd(order, "Response Time", "restaurant_response_time")
+
+                        ]
+                    )
+                );
+            }
+        }
+
+        function getKPIs() {
+            vueSpinnerHandler.incrementOpenCount();
+
+            Visualforce.remoting.Manager.invokeAction(
+                "{!$RemoteAction.CtrRestaurantKPI.getRestaurantKPIs}",
+                "{!Account.Id}",
+                "{!Account.Record_Country__c}",
+                function(result, event) {
+
+                    vueSpinnerHandler.decrementOpenCount();
+
+                    if (!event.status || !result) {
+                        console.error("error occurred event is:", event, "result is:", result);
+                        msgHandler1.setError({
+                            msg: "Unexpected error occurs. Impossible to retrieve restaurant kpi",
+                            type: "error"
+                        });
+                        return;
+                    }
+
+                    if (result.inError) {
+                        console.error("result is error, result is:", result);
+                        msgHandler1.setError({
+                            msg: result.response,
+                            type: "error"
+                        });
+                        return;
+                    }
+
+                    // everything should be fine here
+                    var response = JSON.parse(result.response);
+
+                    if (!response.data ||
+                        !response.data.restaurant ||
+                        !response.data.restaurant.kpis) {
+                        console.log("no element to display");
+                        return;
+                    }
+
+                    // makes values adjustment
+                    for (var i = 0; i < response.data.restaurant.kpis.length; i++) {
+                        var kpi = response.data.restaurant.kpis[i];
+
+                        // skips blank values
+                        if (!kpi.value) {
+                            continue;
+                        }
+
+                        switch (kpi.type) {
+                            case "percentage":
+                                kpi.value = kpi.value.toFixed(2);
+                                break;
+                            case "datetime":
+                                kpi.value = new Date(kpi.value).toLocaleString();
+                                break;
+                        }
+                    }
+
+                    // order kpis list
+                    response.data.restaurant.kpis.sort(function(a, b) {
+                        return a.description.localeCompare(b.description);
+                    });
+
+                    printKPIsTable(response.data);
+
+                }, {
+                    escape: false
+                }
+            );
+        }
+
+        function getFailedOrders() {
+            vueSpinnerHandler.incrementOpenCount();
+
+            Visualforce.remoting.Manager.invokeAction(
+                "{!$RemoteAction.CtrRestaurantKPI.getFailedOrders}",
+                "{!Account.Id}",
+                "{!Account.Record_Country__c}",
+                function(result, event) {
+
+                    vueSpinnerHandler.decrementOpenCount();
+
+                    if (!event.status || !result) {
+                        console.error("error occurred event is:", event, "result is:", result);
+                        msgHandler1.setError({
+                            msg: "Unexpected error occurs. Impossible to retrieve Failed Orders list",
+                            type: "error"
+                        });
+                        return;
+                    }
+
+                    if (result.inError) {
+                        console.error("result is error, result is:", result);
+                        msgHandler1.setError({
+                            msg: result.response,
+                            type: "error"
+                        });
+                        return;
+                    }
+
+                    // everything should be fine here
+                    var response = JSON.parse(result.response);
+
+                    printOrderFailedTable(response.data);
+
+                }, {
+                    escape: false
+                }
+            );
+        }
+
+        function getRQCalls() {
+            sforce.connection.sessionId = "{!GETSESSIONID()}";
+
+            var query = "SELECT Id, TaskSubtype, toLabel(Activity_Subject__c), CreatedDate, Owner.Name " +
+                "FROM Task " +
+                "WHERE WhatId = '{!Account.Id}' AND Type = 'Restaurant Quality call' " +
+                "ORDER BY CreatedDate DESC " +
+                "LIMIT 10";
+
+            vueSpinnerHandler.incrementOpenCount();
+
+            sforce.connection.query(
+                query, {
+                    onSuccess: function(result, source) {
+                        vueSpinnerHandler.decrementOpenCount();
+
+                        if (!result.size) {
+                            return;
+                        }
+
+                        var records = result.getArray("records");
+                        for (var i = 0; i < records.length; i++) {
+                            var call = records[i];
+                            call.ownerName = call.Owner.Name;
+                            call.CreatedDate = new Date(call.CreatedDate).toLocaleDateString();
+                            j$("#rqTasksTable tbody").append(
+                                j$("<tr>").append(
+                                    [
+                                        getGenericTBodyTd(call, "{!$ObjectType.Task.fields.TaskSubtype.Label}", "TaskSubtype", openTaskInSubtab),
+                                        getGenericTBodyTd(call, "{!$ObjectType.Task.fields.Activity_Subject__c.Label}", "Activity_Subject__c"),
+                                        getGenericTBodyTd(call, "{!$ObjectType.Task.fields.CreatedDate.Label}", "CreatedDate"),
+                                        getGenericTBodyTd(call, "{!$ObjectType.Task.fields.OwnerId.Label}", "ownerName")
+                                    ]
+                                )
+                            );
+                        }
+                    },
+                    onFailure: function(error, source) {
+                        vueSpinnerHandler.decrementOpenCount();
+                        console.error("Impossible to get tasks", error);
+                    },
+                    source: {}
+                }
+            );
+        }
+
+        function adjustLookupFields() {
+            Array.prototype.slice.call(
+                document.querySelectorAll(".lookupContainer select")
+            ).map(function(select) {
+                select.className += " slds-select slds-size--1-of-5";
+                select.style["margin-right"] = "5px";
+            });
+
+            Array.prototype.slice.call(
+                document.querySelectorAll(".lookupContainer input[type=text]")
+            ).map(function(select) {
+                select.className += " slds-input slds-size--3-of-5";
+                select.style["margin-right"] = "5px";
+            });
+        }
+
+        function adjustMultiselectPicklist() {
+            Array.prototype.slice.call(
+                document.querySelectorAll(".multiselectContainer tbody tr:nth-child(2) td")
+            ).map(function(elem) {
+                elem.className += /multiselectpicklistcell/i.test(elem.className) ? " slds-size--2-of-12" : " slds-size--5-of-12";
+            });
+
+            Array.prototype.slice.call(
+                document.querySelectorAll(".multiselectContainer tbody select")
+            ).map(function(elem) {
+                elem.className += " slds-select slds-custom-multiselect";
+                elem.style["overflow-y"] = "auto";
+                elem.size = "4";
+            });
+
+            Array.prototype.slice.call(
+                document.querySelectorAll(".multiselectContainer tbody img")
+            ).map(function(elem) {
+                elem.style["margin-left"] = "33.3%";
+                elem.style["margin-right"] = "50px";
+                elem.style.height = "20px";
+            });
+        }
+
+        function adjustTabsHeight() {
+            var $tabsCol = j$("#tabsCol");
+            var $logCallCol = j$("#logCallCol");
+
+            var top = -1;
+            j$("[role=tabpanel]").each(function() {
+                var tabTop = this.getBoundingClientRect().top;
+                if (tabTop > top) {
+                    top = tabTop;
+                }
+            });
+
+            var windowHeight = j$(window).height();
+
+            var tabHeight = Math.max((windowHeight - top), $logCallCol.height());
+
+            j$("[role=tabpanel]").css("height", tabHeight);
+        }
+
+        function openTaskInSubtab(task) {
+            if (!sforce.console.isInConsole()) {
+                window.open("/" + task.Id);
+                return;
+            }
+
+            DHH.openPrimaryTab("/{!Account.Id}", "", function(err, res) {
+                if (err) return;
+                DHH.openSubTab(res, "/" + task.Id, "");
+            });
+        }
+
+        j$(document).ready(function() {
+
+            if (sforce.console.isInConsole()) {
+                sforce.console.setTabTitle("KPI - {!Account.Restaurant_name__c}");
+            }
+
+            // add subject change listener
+            j$("[id$=callSubject]").change(function() {
+                var val = j$(this).val();
+
+                vueSpinnerHandler.toggle();
+
+                // checks if topic is required
+                if (isTopicRequired(val)) {
+                    j$("#callTopicLabel").find("abbr").removeClass("slds-hide");
+                } else {
+                    j$("#callTopicLabel").find("abbr").addClass("slds-hide");
+                }
+
+                // checks if next date is required
+                if (isNextDateRequired(val)) {
+                    j$("#nextCallLabel").find("abbr").removeClass("slds-hide");
+                    j$("[id$=nextcall]").prop("disabled", false);
+                } else {
+                    j$("#nextCallLabel").find("abbr").addClass("slds-hide");
+                    j$("[id$=nextcall]").prop("disabled", true).val("");
+                }
+            });
+
+            getKPIs();
+            getFailedOrders();
+            getRQCalls();
+        });
+
+        window.addEventListener("load", function() {
+            adjustLookupFields();
+            adjustMultiselectPicklist();
+            adjustTabsHeight();
+
+            j$(window).on("resize", adjustTabsHeight);
+        });
+
+    </script>
+
+    <c:VueHandlePageMessagesAsModal id="msgPanel1" instanceName="msgHandler1" />
+    <c:VueSpinner />
+</body>
+</html>
+</apex:page>

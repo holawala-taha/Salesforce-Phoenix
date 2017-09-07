@@ -1,0 +1,60 @@
+<apex:page controller="trialSMSreport.CreateSmsController" tabstyle="Send_SMS_From_Report__tab">
+    <apex:form >
+        <apex:pagemessages />
+        <apex:pageBlock id="block1">
+            <apex:pageBlockSection title="Select Report" id="section1">
+                <apex:selectList value="{!selectedReportId}" size="1">
+                    <apex:actionSupport event="onchange" action="{!refreshReportColumns}" rerender="block1" status="objectStatus" />
+                    <apex:selectOptions value="{!reportsList}" />
+                </apex:selectList>
+            </apex:pageBlockSection>
+            <apex:pageBlockSection title="Select Mobile No Columns" rendered="{!reportSelected}" id="section2">
+                <apex:pageBlockSectionItem >
+                    <apex:outputLabel value="Hold Ctrl key and click to select multiple Mobile numbers" />
+                    <apex:selectList value="{!selectedMobileNoColumns}" multiselect="true" size="5" id="mobileNumbers">
+                        <apex:actionSupport event="onclick" action="{!refreshMobileColumns}" rerender="section3" status="objectStatus" />
+                        <apex:selectOptions value="{!mobileNumberColumnsOptions}" />
+                    </apex:selectList>
+                </apex:pageBlockSectionItem>
+                <apex:pageBlockSectionItem >
+                    <apex:pageBlockTable value="{!selectedMobileNoColumnsLabels}" var="item" id="section3" >
+                        <apex:column headerValue="Selected Mobile Number Columns">
+                            <apex:outputText value="{!item}"/>
+                        </apex:column>
+                    </apex:pageBlockTable>
+                </apex:pageBlockSectionItem>
+            </apex:pageBlockSection>
+            <apex:pageBlockSection title="Select Sender Id" rendered="{!reportSelected}" id="section5">
+                <apex:pageBlockSectionItem >
+                    <apex:outputLabel value="Select the sender" />
+                    <apex:selectList value="{!senderId}" size="1" id="senderList">
+                        <apex:selectOptions value="{!SenderIdDropDown}" />
+                    </apex:selectList>
+                </apex:pageBlockSectionItem>
+            </apex:pageBlockSection>
+            <apex:pageBlockSection title="Click on columns to add them to template. Click Send SMS once the template is ready."
+                id="section4" rendered="{!reportSelected}">
+                <apex:pageBlockSectionItem >
+                    <apex:outputLabel value="Template Parameters" />
+                    <apex:selectList value="{!selectedColumnPicklist2}" multiselect="false" size="5" id="allColumns">
+                        <apex:selectOptions value="{!selectedReportColumnsOptions}" />
+                        <apex:actionSupport event="onclick" action="{!addColumnToTemplate}" rerender="templateBodyId"
+                            status="addColumnStatus" />
+                    </apex:selectList>
+                </apex:pageBlockSectionItem>
+                <apex:pageBlockSectionItem >
+                    <apex:outputPanel >
+                        <apex:outputLabel value="Template" />
+                        <br />
+                        <br />
+                        <apex:actionStatus id="addColumnStatus" startText="Refreshing..." />
+                    </apex:outputPanel>
+                    <apex:inputTextArea value="{!templateBody}" id="templateBodyId" style="width:500px;height:150px;" />
+                </apex:pageBlockSectionItem>
+            </apex:pageBlockSection>
+            <apex:pageBlockButtons location="bottom" rendered="{!reportSelected}">
+                <apex:commandButton value="Send SMS" action="{!sendSMS}" />
+            </apex:pageBlockButtons>
+        </apex:pageBlock>
+    </apex:form>
+</apex:page>

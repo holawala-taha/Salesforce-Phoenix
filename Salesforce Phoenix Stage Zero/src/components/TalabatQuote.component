@@ -1,0 +1,163 @@
+<apex:component controller="CtrCreateQuote" access="global">
+<apex:attribute name="acct" type="String" description="Placeholder" assignTo="{!acctId}"/>
+    <apex:attribute name="oppQ" type="String" description="Placeholder" assignTo="{!oppQId}"/>
+<div style="display:none"> "{!accountWrapper}{!commissionFee}"</div>
+<html>
+
+<body>
+
+    
+{!comissionsExist} {!tieredCommissionExist}
+    <apex:outputPanel rendered="{!comissionsExist}">
+        <table border="1" width="100%">
+            <tr>
+                <th><span class="bold">Commission</span></th>
+                <th><span class="bold">Start Date</span></th>
+                <th><span class="bold">End Date </span></th>
+                <th  style="display:{!if(commPercent,'','none')}"><span class="bold">Commission in Percentage</span></th>
+                <th  style="display:{!if(commPercent,'none','')}">
+                        <span class="bold">Commission per order</span>
+                    </th>  
+                
+            </tr>
+            <apex:repeat value="{!listCommisionItems}" var="item">
+                <tr>               
+                    <td>
+                        <span>{!item.Id_List_Service_Price__r.Displayed_Name__c}</span>
+                    </td>
+                    <td>
+                        <span>
+                            <apex:outputText value="{0,date,dd'.'MM'.'yyyy}">
+                                <apex:param value="{!item.Start_Date__c}" /> 
+                            </apex:outputText>
+                        </span>
+                    </td>
+                    <td>
+                        <span>
+                            <apex:outputText value="{0,date,dd'.'MM'.'yyyy}">
+                                <apex:param value="{!item.End_Date__c}" /> 
+                            </apex:outputText>
+                        </span>
+                   </td>    
+                   <td style="display:{!if(commPercent,'','none')}">
+                        <span>{!item.Commission_In_Percentage__c}</span>
+                    </td> 
+                     <td style="display:{!if(commPercent,'none','')}">
+                        <span>{!item.Commission_Per_Order__c}</span>
+                    </td>    
+                </tr>
+            </apex:repeat>
+        </table>
+    </apex:outputPanel>
+    <apex:outputPanel rendered="{!tieredCommissionExist}">
+        Commission&nbsp;<b>&nbsp;{!listCommisionItems[0].Id_List_Service_Price__r.Displayed_Name__c}&nbsp;</b>&nbsp;Start Date:&nbsp;
+        <apex:outputText value="{0,date,dd'.'MM'.'yyyy}"><apex:param value="{!listCommisionItems[0].Start_Date__c}" /></apex:outputText> <apex:outputPanel rendered="{!If(listCommisionItems[0].End_Date__c=null,false,true)}">&nbsp; End Date: &nbsp;<apex:outputText value="{0,date,dd'.'MM'.'yyyy}"><apex:param value="{!listCommisionItems[0].End_Date__c}" /></apex:outputText> </apex:outputPanel>
+        <br/>
+        <br/>
+        <table border="1" width="100%">
+            <tr>
+                <th><span class="bold">Min</span></th>
+                <th><span class="bold">Max</span></th>
+                <th  style="display:{!if(commPercent,'','none')}"><span class="bold">Commission(%)</span></th>
+                <th  style="display:{!if(commPerOrder,'','none')}">
+                        <span class="bold">Commission per order</span>
+                    </th>  
+                
+            </tr>
+            <apex:repeat value="{!listCommisionItems}" var="item">
+                <tr style="{!if(item.Min__c=null,'display:none','')}">               
+                    <td>
+                        <span>{!item.Min__c}</span>
+                    </td>
+                    <td>
+                        <span>
+                            {!item.Max__c}
+                        </span>
+                    </td>
+                   <td style="display:{!if(commPercent,'','none')}">
+                        <span>{!item.Commission_In_Percentage__c}</span>
+                    </td> 
+                     <td style="display:{!if(commPerOrder,'','none')}">
+                        <span>{!item.Commission_Per_Order__c}</span>
+                    </td> 
+                   
+                       
+                </tr>
+            </apex:repeat>
+        </table>
+        </apex:outputPanel>
+     <apex:outputPanel rendered="{!additionalCostsExist}">
+        <table  border="1" width="100%" >
+            <tr>
+                <td class="bold">Product</td>
+                <td class="bold">Period / Postcode</td>
+                <td class="bold">List Price</td>
+                <td class="bold">Start Date</td>
+                <td class="bold">End Date</td>
+                <td class="bold">Discount</td>
+                <td class="bold">Quantity</td>
+                <td class="bold">Total amount</td>
+                
+            </tr>
+            <apex:repeat value="{!listLineItems}" var="oppProd">  
+            <tr style="padding:5px;width:100%">
+              <td>&nbsp;<apex:outputField value="{!oppProd.name}" /></td>
+              <td >&nbsp;<apex:outputField value="{!oppProd.City_ZipCode__c}"/>&nbsp;</td>               
+              <td>&nbsp;<apex:outputField value="{!oppProd.Listed_Price__c}" />&nbsp;</td>
+              <td>&nbsp;<apex:outputText value="{0,date,dd.MM.yyyy}"><apex:param value="{!oppProd.Start_Date__c}" /></apex:outputText></td>
+              <td>&nbsp;<apex:outputText value="{0,date,dd.MM.yyyy}"><apex:param value="{!oppProd.End_Date__c}" /></apex:outputText></td>
+              <td>&nbsp;<apex:outputField value="{!oppProd.Discount__c}" />&nbsp;</td>                  
+              <td>&nbsp;<apex:outputField value="{!oppProd.Quantity__c}" />&nbsp;</td>
+              <td>&nbsp;<apex:outputField value="{!oppProd.Total_Amount__c}" />&nbsp;</td>
+            </tr>
+           </apex:repeat>
+           
+        </table>
+    </apex:outputPanel>
+    <div class="bold">Non Standard Contract Components</div>
+    {!oppQuote.Non_Standard_Contract_Components__c}
+    <div class="bold">Terms:</div>
+        {!quoteNonstandardText}
+         <apex:outputPanel rendered="{!if(Contains(oppquote.Non_Standard_Contract_Components__c,'Exclusivity: KSP PGA'),'true','false')}"><div>Marketing Supports</div>
+         <div>Marketing supports term is applicable only in case the subscriber is not in any way deal or contract with any company or other party that provides the same service provided by Talabat and its affiliates during contract period. However, If the Subscriber chooses to work with any online delivery portal not associated with Talabat and its affiliates before this contract ends, Subscriber shall inform Talabat of Subscriber’s wish with 30 days notice period in order to stop the above mentioned Marketing supports.</div>
+<div>In case Talabat discoveres at any point of time that Subscriber deals or contracts with any company or other party that provides the same service provided by Talabat and its affiliates during contract period, and Subscriber works with any online delivery portal not associated with Talabat and its affiliates before this contract period end, Subscriber agrees to lose the above mentioned Marketing supports directly without sending a written notice.</div>
+
+        
+        </apex:outputPanel>
+        <apex:outputPanel rendered="{!if(Contains(oppquote.Non_Standard_Contract_Components__c,'Exclusivity: KSP Lite'),'true','false')}"><div>Marketing Supports</div>
+        <div>Talabat agrees to re-invest 18% of Subscriber’s commission revenue as a non cash marketing support on a monthly basis through the following marketing channels: Online marketing, Offline marketing, Merchandising, Commercial spots in Talabat. This budget will be managed by Talabat on mutual consent basis, and Talabat shall provide Data related to invested value based on the monthly consumption.
+        </div>
+        <div>Marketing supports term is applicable only in case the subscriber is not in any way deal or contract with any company or other party that provides the same service provided by Talabat and its affiliates during contract period. However, If the Subscriber chooses to work with any online delivery portal not associated with Talabat and its affiliates before this contract ends, Subscriber shall inform Talabat of Subscriber’s wish with 30 days notice period in order to stop the above mentioned Marketing supports.
+        </div>
+        <div>In case Talabat discoveres at any point of time that Subscriber deals or contracts with any company or other party that provides the same service provided by Talabat and its affiliates during contract period, and Subscriber works with any online delivery portal not associated with Talabat and its affiliates before this contract period end, Subscriber agrees to lose the above mentioned Marketing supports directly without sending a written notice.
+        </div>
+        <br/>
+        </apex:outputPanel>
+        <apex:outputPanel rendered="{!if(Contains(oppquote.Non_Standard_Contract_Components__c,'Exclusivity: KSP+'),'true','false')}">
+        <div>Marketing Supports</div>
+        <div>Talabat agrees to re-invest 18% of Subscriber’s commission revenue as a non cash marketing support on a monthly basis through the following marketing channels: Online marketing, Offline marketing, Merchandising, Commercial spots in Talabat. This budget will be managed by Talabat on mutual consent basis, and Talabat shall provide Data related to invested value based on the monthly consumption.
+        </div>
+        <div>Marketing supports term is applicable only in case the subscriber is not in any way deal or contract with any company or other party that provides the same service provided by Talabat and its affiliates during contract period. However, If the Subscriber chooses to work with any online delivery portal not associated with Talabat and its affiliates before this contract ends, Subscriber shall inform Talabat of Subscriber’s wish with 30 days notice period in order to stop the above mentioned Marketing supports.
+        </div>
+        <div>In case Talabat discoveres at any point of time that Subscriber deals or contracts with any company or other party that provides the same service provided by Talabat and its affiliates during contract period, and Subscriber works with any online delivery portal not associated with Talabat and its affiliates before this contract period end, Subscriber agrees to lose the above mentioned Marketing supports directly without sending a written notice.
+        </div>
+        </apex:outputPanel>
+        <apex:outputPanel rendered="{!if(Contains(oppquote.Non_Standard_Contract_Components__c,'Exclusivity: KSP Classic'),'true','false')}">
+        <div>Marketing Supports</div>
+        <div>Talabat agrees to re-invest 18% of Subscriber’s commission revenue as a non cash marketing support on a monthly basis through the following marketing channels: Online marketing, Offline marketing, Merchandising, Commercial spots in Talabat. This budget will be managed by Talabat on mutual consent basis, and Talabat shall provide Data related to invested value based on the monthly consumption.
+        </div>
+        <div>Marketing supports term is applicable only in case the subscriber is not in any way deal or contract with any company or other party that provides the same service provided by Talabat and its affiliates during contract period. However, If the Subscriber chooses to work with any online delivery portal not associated with Talabat and its affiliates before this contract ends, Subscriber shall inform Talabat of Subscriber’s wish with 30 days notice period in order to stop the above mentioned Marketing supports.
+        </div>
+        <div>In case Talabat discoveres at any point of time that Subscriber deals or contracts with any company or other party that provides the same service provided by Talabat and its affiliates during contract period, and Subscriber works with any online delivery portal not associated with Talabat and its affiliates before this contract period end, Subscriber agrees to lose the above mentioned Marketing supports directly without sending a written notice.
+        </div>
+        
+        
+        </apex:outputPanel>
+
+    
+    
+
+
+</body>
+</html>
+</apex:component>

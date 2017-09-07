@@ -1,0 +1,80 @@
+<apex:component >
+	
+	<apex:attribute name="record" type="Contract" required="true" description="Contract record to edit" />
+
+		<!-- information group  -->
+	<div class="slds-form-element__group">
+		<fieldset class="slds-form--compound">
+			<legend class="slds-form-element__label slds-text-title--caps">Information</legend>
+			<div class="slds-p-around--small">
+				<div class="slds-grid slds-wrap slds-box">
+
+					<!-- name -->
+					<div class="slds-col slds-size--1-of-2 slds-m-bottom--small">
+						<div class="slds-form-element">
+							<label class="slds-form-element__label slds-truncate" for="{!$Component.number}">
+								{!$ObjectType.Contract.fields.ContractNumber.Label}
+							</label>
+							<apex:inputText id="number" styleClass="slds-input" value="{!record.ContractNumber}" disabled="true" />
+						</div>
+					</div>
+
+
+					<!-- restaurant name -->
+					<div class="slds-col slds-size--1-of-2 slds-p-left--small slds-m-bottom--small">								
+						<div class="slds-form-element">
+							<label class="slds-form-element__label slds-truncate" for="{!$Component.restaurant}">
+								{!$ObjectType.Contract.fields.AccountId.Label}
+							</label>
+							<div class="slds-form-element__control lookupContainer">
+								<apex:inputText id="restaurant" value="{!record.Account.Name}" disabled="true" />
+							</div>
+						</div>
+					</div>
+
+					<!-- status -->
+					<div class="slds-col slds-size--1-of-2 slds-m-bottom--small">								
+						<div class="slds-form-element">
+							<label class="slds-form-element__label slds-truncate" for="{!$Component.status}">
+								{!$ObjectType.Contract.fields.Status.Label}
+							</label>
+							<apex:inputText id="status" value="{!record.Status}" styleClass="slds-select" disabled="true" />
+						</div>
+					</div>
+					
+					<!-- physical copy -->
+					<div class="slds-col slds-size--1-of-2 slds-p-left--small slds-m-bottom--small">
+						<div class="slds-form-element">
+							<label class="slds-form-element__label slds-truncate" for="{!$Component.phcopy}">
+								{!$ObjectType.Contract.fields.Physical_Copy__c.Label}
+							</label>
+							<apex:inputField id="phcopy" value="{!record.Physical_Copy__c}" styleClass="slds-select" />
+						</div>
+					</div>
+
+					<!-- Do not auto renew -->
+					<div class="slds-col slds-size--1-of-2 slds-p-top--small slds-m-bottom--small">
+						<div class="slds-form-element">
+							<label class="slds-checkbox--toggle slds-grid">
+								<span class="slds-form-element__label slds-m-bottom--none">{!$ObjectType.Contract.fields.Do_not_auto_renew__c.Label}</span>
+								<apex:inputCheckbox styleClass="slds-input" id="doNotAutoRenew" value="{!record.Do_not_auto_renew__c}"  />
+								<span id="toggle-desc" class="slds-checkbox--faux_container" aria-live="assertive">
+									<span class="slds-checkbox--faux"></span>
+									<span class="slds-checkbox--on"></span>
+									<span class="slds-checkbox--off"></span>
+								</span>
+							</label>
+						</div>
+					</div>
+
+					<div class="slds-size--1-of-2 slds-p-left--small slds-m-bottom--small">
+						<!-- just for alignment  -->
+					</div>
+
+				</div>
+
+			</div>
+		</fieldset>
+	</div>
+
+</apex:component>

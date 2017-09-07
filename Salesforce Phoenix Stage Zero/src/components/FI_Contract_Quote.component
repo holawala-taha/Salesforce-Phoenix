@@ -1,0 +1,172 @@
+<apex:component controller="CtrCreateQuote" access="global">
+    <apex:attribute name="oppQ" type="String" description="Placeholder" assignTo="{!oppQId}"/>
+    <apex:attribute name="acct" type="String" description="Placeholder" assignTo="{!acctId}"/>
+            <div style="width:700px; margin: auto;">
+                <div style="display:inline-block; width:44%;vertical-align: top;margin-left:5%;">
+                    <img src="{!URLFOR($Resource.FI_PizzaOnline_logo)}" style="width: 100%;" />
+                </div>
+                <div id="CQsafkaaLogo" style="display:inline-block; width:44%;vertical-align: top; float:right;">
+                    <img src="{!URLFOR($Resource.FI_Safkaa_logo)}" style="width:40%" />
+                </div>
+                
+                <div id="CQtitle" style="width:700px;margin: auto;margin-top:40px !important;text-align:center;font-size: 15pt;color:#E16C22;">
+                    SLM Finland Oy:n Palvelusopimus
+                </div>
+                <div style="width:700px;margin: auto;text-align:center;font-size:11pt;">
+                    Huom. Palauta täytetty palvelusopimus <br />
+                    sekä ravintolanne ruokalista palautuskuoressa SLM Finland Oy:lle <br />
+                </div>
+                <br /><br />
+                <table id="CQTable" border="1" style="width: 100%;">
+                    <tr style="width: 100%;border: 1px solid black;">
+                        <th colspan="3" style="text-align:center;font-size:9pt;border: 1px solid black;"><b>Yrityksen Perustiedot</b></th>
+                        
+                    </tr>
+                    <tr style="width: 100%">
+                        <td style="border: 1px solid black;width:50%;padding: 1px;" >
+                            <span style="display:block;font-size:9pt;">Yrityksen virallinen nimi </span>
+                            <span style="display:block;font-size:10pt;height:25px;position:relative;bottom:-7px;"><b>{!accountWrapper.companyName}</b></span>
+                        </td>
+                        <td style="border: 1px solid black;width:50%;padding: 1px;" colspan="2">
+                            <span style="display:block;font-size:9pt;">Ravintolan nimi </span>
+                            <span style="display:block;font-size:10pt;height:25px;position:relative;bottom:-7px;"><b>{!accountWrapper.restaurantName}</b></span>
+                        </td>
+                    </tr>
+                    <tr style="width: 100%">
+                        <td style="border: 1px solid black;width:50%;padding: 1px;">
+                            <span style="display:block;font-size:9pt;">Ravintolan virallinen käyntiosoite </span>
+                            <span style="display:block;font-size:10pt;height:25px;position:relative;bottom:-7px;">{!accountWrapper.addressStreet}</span>
+                        </td>
+                        <td id="CQnoborderRight" style="width: 25%;padding: 1px;">
+                            <span style="display:block;font-size:9pt;">Postinumero </span>
+                            <span style="display:block;font-size:10pt;height:25px;position:relative;bottom:-7px;"><b>{!accountWrapper.addressPostal}</b></span>
+                        </td>
+                        <td id="CQnoborderLeft">
+                            <span style="display:block;font-size:9pt;">Postitoimipaikka </span>
+                            <span style="display:block;font-size:10pt;height:25px;position:relative;bottom:-7px;"><b>{!accountWrapper.addressCity}</b></span>
+                        </td>
+                    </tr>
+                    <tr style="width: 100%">
+                        <td id="CQnoborderRight" style="width: 50%;padding: 1px;">
+                            <span style="display:block;font-size:9pt;">Ravintolan puhelinnumero </span>
+                            <span style="display:block;font-size:10pt;height:25px;position:relative;bottom:-7px;"><b>{!accountWrapper.restaurantPhoneNumber}</b></span>
+                        </td>
+                        <td  id="CQnoborderLeft" style="width: 50%;padding: 1px;" colspan="2">
+                            <span style="display:block;font-size:9pt;">Y-tunnus </span>
+                            <span style="display:block;font-size:10pt;height:25px;position:relative;bottom:-7px;"><b>{!accountWrapper.companyId}</b></span>
+                        </td>
+                    </tr>
+                    <tr style="border: 1px solid black;width: 100%">
+                        <td id="CQnoborderRight" style="width: 50%;padding: 1px;" >
+                            <span style="display:block;font-size:9pt;">Ravintolan vastuuhenkilön etunimi, sukunimi </span>
+                            <span style="display:block;font-size:10pt;height:25px;position:relative;bottom:-7px;"><b>{!accountWrapper.ownerName}</b></span>
+                        </td>
+                        <td  id="CQnoborderLeft" style="width: 50%;padding: 1px;" colspan="2">
+                            <span style="display:block;font-size:9pt;">Matkapuhelinnumero (GSM) </span>
+                            <span style="display:block;font-size:10pt;height:25px;position:relative;bottom:-7px;"><b>{!accountWrapper.ownerMobilePhone}</b></span>
+                        </td>
+                    </tr>
+                    <tr style="border: 1px solid black;width: 100%">
+                        <td id="CQnoborderRight" style="width: 50%;padding: 1px;">
+                            <span style="display:block;font-size:9pt;">Pankki  </span>
+                            <span style="display:block;font-size:10pt;height:25px;position:relative;bottom:-7px;"></span>
+                        </td>
+                        <td  id="CQnoborderLeft" style="border: 1px solid black;border-left: 0px;border-right: 0px;width: 50%;padding: 1px;" colspan="2">
+                            <span style="display:block;font-size:9pt;">IBAN-numero </span>
+                            <span style="display:block;font-size:10pt;height:25px;position:relative;bottom:-7px;"></span>
+                        </td>
+                    </tr>
+                   <tr style="border: 1px solid black;width: 100%">
+                        <td id="CQnoborderRight" style="width: 50%;padding: 1px;" >
+                            <span style="display:block;font-size:9pt;">Internet-sivujen osoite </span>
+                            <span style="display:block;font-size:10pt;height:25px;position:relative;bottom:-7px;"><b>{!accountWrapper.restaurantWebsite}</b></span>
+                        </td>
+                        <td  id="CQnoborderLeft" style="width: 50%;padding: 1px;" colspan="2">
+                            <span style="display:block;font-size:9pt;">Sähköpostiosoite </span>
+                            <span style="display:block;font-size:10pt;height:25px;position:relative;bottom:-7px;"><b>{!accountWrapper.restaurantEmail}</b></span>
+                        </td>
+                    </tr>
+                    <tr style="border: 1px solid black;width: 100%">
+                        <th colspan="3" style="text-align:center;font-size:9pt;"><b>Valitse palvelupaketti</b></th>
+                        
+                    </tr>
+                    <apex:repeat value="{!listCommisionItems}" var="item">
+                    <tr style="border: 1px solid black;">               
+                        <td style="border: 1px solid black;width:50%;padding: 1px;" >
+                            <span style="display:block; height:15px;font-size:9pt;">{!item.Sub_Type__c} </span>
+                        </td>
+                        <td style="border: 1px solid black;width:50%;padding: 1px;" colspan="2">
+                            <span style="display:block; height:15px;font-size:9pt;">
+                                <apex:outputText value="{0,number,0}%">
+                                    <apex:param value="{!item.Commission_In_Percentage__c}" />
+                                </apex:outputText>
+                            </span>
+                        </td>              
+                    </tr>
+                    </apex:repeat>
+                    <apex:repeat value="{!listLineItems}" var="item">
+                    <tr style="border: 1px solid black;">               
+                        <td style="border: 1px solid black;width:50%;padding: 1px;" >
+                            <span style="display:block; height:15px;font-size:9pt;">{!item.Name} </span>
+                        </td>
+                        <td style="border: 1px solid black;width:50%;padding: 1px;" colspan="2">
+                            <span style="display:block; height:15px;font-size:9pt;">
+                                {!item.Total_Amount__c}
+                            </span>
+                        </td>              
+                    </tr>
+                    </apex:repeat>
+                    <tr>
+                        <td id="CQnoborderRight" style="border: 1px solid black: width: 100%" >
+                             <span style="display:block;font-size:9pt;">Tilitysjakso:</span>
+                        </td>
+                        <td id="CQnoborderLeft" style="border: 1px solid black: width: 100%" colspan="2">
+                             <span style="display:block;font-size:9pt;">Viikoittain, kun kertymä on yli 250,00 € sis. alv</span>
+                        </td>
+                    </tr>
+                   <tr style="border: 1px solid black;width: 100%">
+                        <td style="border: 1px solid black;border-left: 0px;border-right: 0px;width: 50%;padding: 1px;" colspan="3">
+                            <span style="display:block;font-size:9pt;">Sopimusehdot: </span>
+                            <br />
+                            <span id="CQtermsandconditions" style="display:block;font-size:9pt;">
+                                Edellytämme, että ravintolan online-hinnoittelu vastaa ravintolan normaalia hinnoittelua. 
+                                Palveluun liittyvällä yrityksellä tulee olla voimassa olevat ALV- ja ennakkoperintärekisteröinnit. 
+                                Mikäli nämä rekisterit lakkaavat, SLM Finland Oy:llä on oikeus irtisanoa sopimus välittömästi. 
+                                Yritys on velvollinen ilmoittamaan näissä rekistereissä tapahtuneista muutoksista SLM Finland Oy:lle. 
+                                Lisäksi yrityksen tulee viipymättä ilmoittaa mahdollisesta toiminnan lopettamisesta, 
+                                ravintolan sulkemisesta tai ravintolan omistajan muutoksesta kirjallisesti SLM Finland Oy:n 
+                                muutosilmoituslomakkeella. Ravintola on velvollinen toimittamaan tilauksen toimitusosoiterivillä 
+                                ilmoitettuun osoitteeseen. Jos ravintola toimittaa tilauksen johonkin muuhun osoitteeseen, 
+                                kuin toimitusosoiterivillä ilmoitettuun osoitteeseen, SLM Finland Oy:llä on oikeus vähentää tilauksen 
+                                loppusumma ravintolan tilityksistä. SLM Finland Oy:llä on oikeus käyttää ravintolan SLM Finland Oy:lle 
+                                antamia tietoja kaikissa sen ylläpitämissä, ravintolan tilaamaa palvelua vastaavissa, palveluissaan. 
+                                Muut SLM Finland Oy:n palvelut ja veloitukset hinnaston mukaan.
+                            </span>
+                            <br />
+                            <br />
+                        </td>
+                    </tr>
+                    <tr style="border: 1px solid black;width: 100%">
+                        <td style="border: 1px solid black;width:50%;padding: 1px;font-size:9pt;" >
+                            <span style="display:block">Paikka ja aika </span>
+                            <span style="display:block;"></span>
+                            <br /><br /><br />
+                        </td>
+                        <td style="border: 1px solid black;width:50%;padding: 1px;font-size:9pt;" colspan="2">
+                            <span style="display:block">Allekirjoitus ja nimenselvennys </span>
+                            <span style="display:block;"></span>
+                            <br /><br /><br />
+                        </td>
+                    </tr>
+                    <tr style="border: 1px solid black;width: 100%">
+                        <td style="border: 1px solid black;border-left: 0px;border-right: 0px;padding: 1px;" colspan="3">
+                            <span style="font-size:9pt;">SLM Finland Oy &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span>
+                            <span style="font-size:9pt;">Äyritie 16, 01510 Vantaa &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span>
+                            <span style="font-size:9pt;">02 9300 0470 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span>
+                            <span style="font-size:9pt;">1936684-6 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span>
+                            <span style="font-size:9pt;">info@slm.fi</span>
+                        </td>
+                    </tr>
+                </table>
+            </div>
+</apex:component>

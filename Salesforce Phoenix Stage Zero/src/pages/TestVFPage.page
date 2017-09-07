@@ -1,0 +1,5 @@
+<apex:page showheader="false" sidebar="false" standardStylesheets="false" renderAs = "PDF">
+	<apex:pageBlock>
+		<c:SE_Quote_PO acct = "001w000001fBabgAAC" oppQ = "a0Fw000001urRTuEAM"/>
+	</apex:pageBlock>
+</apex:page>

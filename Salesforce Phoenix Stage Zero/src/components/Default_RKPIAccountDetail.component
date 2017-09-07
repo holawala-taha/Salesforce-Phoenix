@@ -1,0 +1,149 @@
+<!--
+	Used in the restaurant kpi table, displays a common set of account's fields
+-->
+<apex:component layout="none">
+
+<apex:attribute name="record" type="Account" required="true" description="the account record" />
+<apex:attribute name="restaurantOwnerName" type="String" required="true" description="Restaurant owner name" />
+
+<!-- Account detail Start-->
+<div class="slds-col slds-size--1-of-1 slds-scrollable--x slds-p-around--small">
+	<div class="slds-p-horizontal--small">
+		<div class="slds-text-heading--medium slds-text-align--left slds-p-bottom--small">
+			Restaurant Details
+		</div>
+		<table class="slds-table slds-table--bordered slds-table--cell-buffer slds-table--col-bordered">
+			<tbody>
+				<tr>
+					<td class="fieldName">
+						<div class="slds-truncate" title="{!$ObjectType.Account.fields.Name.Label}">
+							{!$ObjectType.Account.fields.Name.Label}
+						</div>
+					</td>
+					<td>
+						<div class="slds-truncate" title="{!record.Name}">
+							{!record.Name}
+						</div>
+					</td>
+
+					<td class="fieldName">
+						<div class="slds-truncate" title="{!$ObjectType.Account.fields.Backend_ID__c.Label}">
+							{!$ObjectType.Account.fields.Backend_ID__c.Label}
+						</div>
+					</td>
+					<td>
+						<div class="slds-truncate" title="{!record.Backend_ID__c}">
+							{!record.Backend_ID__c}    
+						</div>
+					</td>
+
+					<td class="fieldName">
+						<div class="slds-truncate" title="{!$ObjectType.Account.fields.Phone.Label}">
+							{!$ObjectType.Account.fields.Phone.Label}
+						</div>
+					</td>
+					<td>
+						<div class="slds-truncate" title="{!record.Phone}">
+							<apex:outputField value="{!record.Phone}" />
+						</div>
+					</td>
+
+				</tr>
+				<tr>
+					<td class="fieldName">
+						<div class="slds-truncate" title="{!$ObjectType.Account.fields.OwnerId.Label}">
+							{!$ObjectType.Account.fields.OwnerId.Label}
+						</div>
+					</td>
+					<td>
+						<div class="slds-truncate" title="{!restaurantOwnerName}">
+							{!restaurantOwnerName}    
+						</div>
+					</td>
+
+					<td class="fieldName">
+						Backend Link
+					</td>
+					<td>
+						<!-- TODO: Add the backend link here - @CreatedBy m.zeuli -->
+					</td>
+
+					<td class="fieldName">
+						<div class="slds-truncate" title="{!$ObjectType.Account.fields.Account_Email__c.Label}">
+							{!$ObjectType.Account.fields.Account_Email__c.Label}
+						</div>
+					</td>
+					<td>
+						<div class="slds-truncate" title="{!record.Account_Email__c}"> 
+							{!record.Account_Email__c}
+						</div>
+					</td>
+				</tr>
+
+				<tr>
+					<td class="fieldName">
+						<div class="slds-truncate" title="{!$ObjectType.Account.fields.Bank_Account_Owner__c.Label}">
+							{!$ObjectType.Account.fields.Bank_Account_Owner__c.Label}
+						</div>
+					</td>
+					<td>
+						<div class="slds-truncate" title="{!record.Bank_Account_Owner__c}"> 
+							{!record.Bank_Account_Owner__c}
+						</div>
+					</td>
+
+					<td class="fieldName">
+						<div class="slds-truncate" title="{!$ObjectType.Account.fields.Relay_Method__c.Label}">
+							{!$ObjectType.Account.fields.Relay_Method__c.Label}
+						</div>
+					</td>
+					<td>
+						<div class="slds-truncate" title="{!record.Relay_Method__c}"> 
+							<apex:outputField value="{!record.Relay_Method__c}" />
+						</div>
+					</td>
+
+					<td class="fieldName">
+						<!-- just for alignment  -->
+					</td>
+					<td>
+						<!-- just for alignment  -->
+					</td>
+				</tr>
+
+				<tr>
+					<td class="fieldName">
+						<div class="slds-truncate" title="{!$ObjectType.Account.fields.Bank_Account_Number__c.Label}">
+							{!$ObjectType.Account.fields.Bank_Account_Number__c.Label}
+						</div>
+					</td>
+					<td>
+						<div class="slds-truncate" title="{!record.Bank_Account_Number__c}"> 
+							{!record.Bank_Account_Number__c}
+						</div>
+					</td>
+
+					<td class="fieldName">
+						<div class="slds-truncate" title="{!$ObjectType.Account.fields.Average_rating__c.Label}">
+							{!$ObjectType.Account.fields.Average_rating__c.Label}
+						</div>
+					</td>
+					<td>
+						<div class="slds-truncate" title="{!record.Average_rating__c}"> 
+							<apex:outputField value="{!record.Average_rating__c}" />
+						</div>
+					</td>
+
+					<td class="fieldName">
+						<!-- just for alignment  -->
+					</td>
+					<td>
+						<!-- just for alignment  -->
+					</td>
+				</tr>
+			</tbody>
+		</table>
+	</div>
+</div>
+<!-- Account detail End-->
+</apex:component>

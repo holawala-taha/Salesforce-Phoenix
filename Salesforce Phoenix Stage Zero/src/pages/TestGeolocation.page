@@ -1,0 +1,128 @@
+<apex:page showHeader="false" standardStylesheets="false" sidebar="false" applyHtmlTag="false" applyBodyTag="false" docType="html-5.0">
+<html>
+<head>
+	<title>Test geolocation</title>
+	<style type="text/css">
+		/* Always set the map height explicitly to define the size of the div
+       * element that contains the map. */
+      #map {
+        height: 400px;
+        width: 100%;
+      }
+      /* Optional: Makes the sample page fill the window. */
+      html, body {
+        height: 100%;
+        margin: 0;
+        padding: 0;
+      }
+
+	</style>
+</head>
+<body>
+	<p><button onclick="geoFindMe()">Find me!</button></p>
+	<div id="out"/>
+	<div id="map"></div>
+	<div id="logs"/>
+	<script type="text/javascript">
+
+	var attempt = 0;
+
+	var geo_options = {
+	    enableHighAccuracy: true,
+	    maximumAge: 0,
+	    timeout: 30000
+	};
+
+	var map, myMarker, infoWindow;
+
+	function initMap() {
+	    map = new google.maps.Map(document.getElementById('map'), {
+	        center: {
+	            lat: -34.397,
+	            lng: 150.644
+	        },
+	        zoom: 18
+	    });
+	}
+
+	function handleLocationError(browserHasGeolocation, myMarker, pos) {
+	    myMarker.setPosition(pos);
+	    myMarker.setContent(browserHasGeolocation ?
+	        'Error: The Geolocation service failed.' :
+	        'Error: Your browser doesn\'t support geolocation.');
+	    myMarker.open(map);
+	}
+
+	function geoFindMe() {
+	    var output = document.getElementById("out");
+	    var logs = document.getElementById("logs");
+
+	    if (!navigator.geolocation) {
+	        output.innerHTML = "<p>Geolocation is not supported by your browser</p>";
+	        return;
+	    }
+
+	    function success(position) {
+	        console.log("Position: ", position);
+
+	        logs.innerHTML += "<br/> Position coords timestamp is: " + position.timestamp;
+
+	        var latitude = position.coords.latitude;
+	        var longitude = position.coords.longitude;
+
+	        var pos = {
+	            lat: position.coords.latitude,
+	            lng: position.coords.longitude
+	        };
+
+	        if (map) {
+	            infoWindow = new google.maps.InfoWindow;
+
+	            myMarker = new google.maps.Marker({
+	                draggable: true,
+	                position: pos,
+	                map: map
+	            });
+
+	            myMarker.addListener("dragend", function(evt) {
+	                console.log("dragend, latLng: ", evt.latLng.lat(), evt.latLng.lng());
+	            });
+
+	            myMarker.addListener("click", function(evt) {
+	                infoWindow.open(map, myMarker);
+	            });
+
+	            myMarker.addListener("drag", function(evt) {
+	            	output.innerHTML = '<p>Latitude is ' + evt.latLng.lat() + '° <br>Longitude is ' + evt.latLng.lng() + '°</p>';
+	            });
+
+	            infoWindow.setContent('Location found. If not correct:<br><ul><li>Drag and drop this pin into the right spot</li><li>Press "Find Me" button again</li><li>If nothing works... we dont care</li></ul>');
+	            infoWindow.open(map, myMarker);
+	            map.setCenter(pos);
+	        }
+
+	        output.innerHTML = '<p>Latitude is ' + latitude + '° <br>Longitude is ' + longitude + '°</p>';
+	    }
+
+	    function error(error) {
+	    	alert("Please make sure you turned on GPS location service")
+	    	attempt++;
+	        logs.innerHTML +="<br>" + attempt + " - Unable to retrieve your location - " + error.message + " - " + error.code;
+	        output.innerHTML = "";
+	        if (/timeout/i.test(error.message)) {
+	            logs.innerHTML += "<br>Increasing timeout..."
+	            geo_options.timeout += 10000;
+	            setTimeout(geoFindMe, 2000);
+	        }
+	    }
+
+
+	    output.innerHTML = "<p>Locating…</p>";
+
+	    navigator.geolocation.getCurrentPosition(success, error, geo_options);
+	}
+	</script>
+	<script src="https://maps.googleapis.com/maps/api/js?client=gme-deliveryheroholding&channel=salesforcephoenix&callback=initMap"></script>
+</body>
+</html>
+</apex:page>

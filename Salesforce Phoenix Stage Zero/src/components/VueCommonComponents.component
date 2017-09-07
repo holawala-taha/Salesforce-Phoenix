@@ -1,0 +1,100 @@
+<!-- Common Vue.js components to be used inside pages -->
+<apex:component layout="none">
+	<script type="text/javascript">
+		
+		/**
+		 * Display a spinner on the page
+		 * @type {Array}
+		 */
+		Vue.component("spinner", {
+			props: ["open"],
+			template: `<div class="slds-spinner_container" v-bind:class="[ open ? 'slds-show' : 'slds-hide' ]">
+							<div class="slds-spinner--brand slds-spinner slds-spinner--large" role="status">
+								<span class="slds-assistive-text">Loading</span>
+								<div class="slds-spinner__dot-a"></div>
+								<div class="slds-spinner__dot-b"></div>
+							</div>
+						</div>`
+		});
+
+		/**
+		 * Displays an error popup 
+		 */
+		Vue.component("error-handler", {
+		    props: ["message", "type", "timeout", "callback"],
+		    data: function() {
+		    	return {
+		    		open: !!this.message
+		    	};
+		    },
+		    computed: {
+		        isInfo: function() {
+		            return !this.type;
+		        },
+		        isSuccess: function() {
+		            return /success/i.test(this.type);
+		        },
+		        isWarning: function() {
+		            return /warning/i.test(this.type);
+		        },
+		        isError: function() {
+		            return /error/i.test(this.type);
+		        }
+		    },
+		    methods: {
+		        close: function() {
+		            this.open = false;
+		            if (typeof this.callback === "function") {
+		            	this.$nextTick(this.callback);
+		            }
+		            this.$emit("closed");
+		        }
+		    },
+		    watch: {
+		        message: function(val) {
+		            this.open = !!val;
+		        },
+		        timeout: function() {
+		        	var self = this;
+		        	setTimeout(function() {
+		        		self.close();
+		        	}, this.timeout);
+		        }
+		    },
+		    template: `<div>
+						    <div 
+						    	role="alertdialog" 
+						    	tabindex="-1" 
+						    	aria-labelledby="prompt-heading-id" 
+						    	aria-describedby="prompt-message-wrapper" 
+						    	class="slds-modal slds-modal--prompt" 
+						    	v-bind:class="{'slds-fade-in-open': open}">
+						        
+						        <div class="slds-modal__container">
+						            <div 
+						            	class="slds-modal__header slds-theme--alert-texture" 
+						            	v-bind:class="{'slds-theme--info': isInfo, 'slds-theme--success': isSuccess, 'slds-theme--warning': isWarning, 'slds-theme--error': isError}">
+						                
+						                <button type="button" class="slds-button slds-modal__close slds-button--icon-inverse" title="Close" v-on:click="close">
+						                    <svg aria-hidden="true" class="slds-button__icon slds-button__icon--large">
+						                        <use xlink:href="{!URLFOR($Resource.slds231, '/assets/icons/utility-sprite/svg/symbols.svg#close')}"></use>
+						                    </svg>
+						                    <span class="slds-assistive-text">Close</span>
+						                </button>
+						                <h2 class="slds-text-heading--medium" id="prompt-heading-id">{{type}}</h2>
+						            </div>
+						            <div class="slds-modal__content slds-p-around--medium">
+						                <div>
+						                    <p>{{message}}</p>
+						                </div>
+						            </div>
+						            <div class="slds-modal__footer slds-theme--default">
+						                <button type="button" class="slds-button slds-button--neutral" v-on:click="close">Ok</button>
+						            </div>
+						        </div>
+						    </div>
+						    <div class="slds-backdrop" v-bind:class="{'slds-backdrop--open': open}"></div>
+					</div>`
+		});
+	</script>
+</apex:component>

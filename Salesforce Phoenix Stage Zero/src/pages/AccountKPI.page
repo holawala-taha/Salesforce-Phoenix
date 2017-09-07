@@ -1,0 +1,376 @@
+<apex:page standardController="Account" standardStylesheets="false" applyHtmlTag="true" docType="html-5.0" showHeader="false" extensions="CtrAccountKPI" >
+<apex:stylesheet value="{!URLFOR($Resource.slds, 'assets/styles/salesforce-lightning-design-system-vf.css')}" />
+    <html xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+        <head>
+            <script src="https://code.jquery.com/jquery-latest.min.js"></script>
+            <script type='text/javascript' src='/canvas/sdk/js/29.0/publisher.js'></script>            
+            <script type='text/javascript' src='/soap/ajax/13.0/connection.js'/>
+            <script type='text/javascript' src='/soap/ajax/13.0/apex.js'/>
+            <meta charset="utf-8" />
+        </head>
+        <style>
+        table tr {
+            width:100%;border-bottom:2px solid #d8dde6;
+
+        }
+       
+        table th{
+           // width:18%;
+           background-color: #f2f2f2;
+        }
+        table tr{
+            width:100%;
+        }
+        thead{
+            width:100%;
+        }
+        tr:nth-child(even) {
+            background-color: #f2f2f2;
+        }
+        body{
+            font-size:8px;
+        }
+        </style>
+        <script>
+                j$ = jQuery.noConflict();
+                j$(document).ready(function() { 
+                    //alert('remote');
+                    Visualforce.remoting.Manager.invokeAction(
+                            '{!$RemoteAction.CtrAccountKPI.getAccReviews}','{!Account.ID}',
+                  
+                      
+                            function(result, event) {
+                               
+                                if(event.status) {
+                                    var i = 0;  
+                                    var tr = j$('#reviewKPI');    
+                                    var tr2 = j$('#contactKPI');
+                                    var tr3 = j$('#failureKPI');
+                                    var tr4=j$('#areaKPI');
+                                    var tr5=j$('#npsKPI');
+                                    j$.each(result, function() {
+                                    if(result[i].KPItype=='Review'){
+                                        tr.append('<tr ><td scope="col" style="word-wrap: break-word; white-space:normal;font-size:12px" class="slds-size--1-of-5">' + result[i].OrderDate +  '</td>' +
+                                                      '<td scope="col"  style="word-wrap: break-word; white-space:normal;font-size:12px" class="slds-size--1-of-5 ">' + result[i].OrderId + '</td>' +
+                                                      '<td scope="col"  style="word-wrap: break-word; white-space:normal;font-size:12px" class="slds-size--1-of-5">' + result[i].RatingQuality + '</td>' +
+                                                      '<td scope="col"  style="word-wrap: break-word; white-space:normal;font-size:12px" class="slds-size--1-of-5">' + result[i].RatingSpeed + '</td>' +
+                                                      '<td scope="col"  style="word-wrap: break-word; white-space:normal;font-size:12px" class="slds-size--1-of-5">' + result[i].RatingValue+'</td>' +
+                                                      '</tr>'+
+                                                      '<tr>'+
+                                                      '<td scope="col" colspan="5" style="word-wrap: break-word; white-space:normal;font-size:12px" class="slds-size--5-of-5 " ><span class="slds-section__title" style="text-decoration:underline"> Review Comment:</span> ' + result[i].ReviewComment + '</td>' +
+                                                                                                      
+                                                      '</tr>'
+                                        );
+                                    }
+                                    if(result[i].KPItype=='ContactLog'){
+                                        //alert('yayay');
+                                        tr2.append('<tr><td scope="col" style="word-wrap: break-word; white-space:normal" class="slds-size--1-of-5" style="font-size:12px">' + result[i].ContactDate +  '</td>' +
+                                                      '<td scope="col" class="slds-size--1-of-5" style="font-size:12px">' + result[i].ContactFrom + '</td>' +
+                                                      '<td scope="col" class="slds-size--1-of-5" style="font-size:12px">' + result[i].ContactType + '</td>' +
+                                                      '<td scope="col" class="slds-size--1-of-5" style="font-size:12px">' + result[i].ContactAgent + '</td>' +
+                                                      '<td scope="col" class="slds-size--1-of-5" style="font-size:12px">' + parseString(result[i].OrderId)+'</td>' +
+                                                      '</tr>'+
+                                                      '<tr>'+
+                                                      '<td scope="col" colspan="5" class="slds-size--1-of-1" style="word-wrap: break-word;white-space:normal;font-size:12px"><span class="slds-section__title" style="text-decoration:underline"> Contact Notes:</span> ' + parseString(result[i].ContactNotes) + '</td>' +
+                                                                                                     
+                                                      
+                                                     
+                                                      '</tr>'
+                                        );
+                                    }
+                                    
+                                     if(result[i].KPItype=='Failure'){
+                                        //alert('yayay');
+                                        tr3.append('<tr><td scope="col" class="slds-size--1-of-6" style="font-size:12px">' + result[i].OrderId +  '</td>' +
+                                                      '<td scope="col" class="slds-size--1-of-6" style="font-size:12px">' + result[i].OrderStatus + '</td>' +
+                                                      '<td scope="col" class="slds-size--1-of-6" style="width:18%;word-wrap: break-word; white-space:normal;font-size:12px">' + result[i].OrderDate + '</td>' +
+                                                      '<td scope="col" class="slds-size--1-of-6" style="font-size:12px">' + result[i].OrderAmount + '</td>' +
+                                                      '<td scope="col" class="slds-size--1-of-6" style="font-size:12px">' + result[i].Postcode+'</td>' +
+                                                      '<td scope="col" class="slds-size--1-of-6" style="word-wrap: break-word; white-space:normal;font-size:12px">' + result[i].Reason + '</td>' +
+                                                                                                     
+                                                      '</tr>'
+                                        );
+                                    }
+                                     if(result[i].KPItype=='DeliveryArea'){
+                                        //alert('yayay');
+                                        if(result[i].areaHeader!=null && result[i].areaHeaderareaHeader!=''){
+                                            j$('#areaInfo').html(result[i].areaHeader);
+                                        
+                                        }
+                                        else
+                                        tr4.append('<tr><td scope="col" style="word-wrap: break-word; white-space:normal;font-size:12px;width:5%" class="slds-size--1-of-13">' + parseString(result[i].Shortcode)+  '</td>' +
+                                                      '<td scope="col" style="word-wrap: break-word; white-space:normal;font-size:12px;width:5%" class="slds-size--1-of-13">' + parseString(result[i].RestaurantCoverage)+ '</td>' +
+                                                      '<td scope="col" style="word-wrap: break-word; white-space:normal;font-size:12px;width:8%" class="slds-size--1-of-13">' + parseString(result[i].RestaurantOrders)+ '</td>' +
+                                                      '<td scope="col" style="word-wrap: break-word; white-space:normal;font-size:12px;width:8%" class="slds-size--1-of-13">' + parseString(result[i].RestaurantOrdersPerc)+ '</td>' +
+                                                      '<td scope="col" style="word-wrap: break-word; white-space:normal;font-size:12px;width:6%" class="slds-size--1-of-13">' + result[i].AreaOrders+ '</td>' +
+                                                      '<td scope="col" style="word-wrap: break-word; white-space:normal;font-size:12px;width:4%" class="slds-size--1-of-13">' + result[i].AreaRestaurants+'</td>' +
+                                                      '<td scope="col" style="word-wrap: break-word; white-space:normal;font-size:12px;width:4%" class="slds-size--1-of-13">' + result[i].AreaOpR+ '</td>' +
+                                                      '<td scope="col" style="word-wrap: break-word; white-space:normal;font-size:12px;width:4%" class="slds-size--1-of-13">' + result[i].AreaYoY+ '</td>' +
+                                                      '<td scope="col" style="word-wrap: break-word; white-space:normal;font-size:12px;width:6%" class="slds-size--1-of-13">' + result[i].AreaRevenueAvg+ '</td>' +
+                                                      '<td scope="col" style="word-wrap: break-word; white-space:normal;font-size:12px;width:7%" class="slds-size--1-of-13">' + result[i].AreaCustomers+ '</td>' +
+                                                      '<td scope="col" style="word-wrap: break-word; white-space:normal;font-size:12px;width:7%" class="slds-size--1-of-13">' + result[i].AreaBasket+ '</td>' +
+                                                      '<td scope="col" style="word-wrap: break-word; white-space:normal;font-size:12px;width:8%" class="slds-size--1-of-13">' + result[i].AreaCuisineOrders+ '</td>' +
+                                                      '<td scope="col" style="word-wrap: break-word; white-space:normal;font-size:12px;width:8%" class="slds-size--1-of-13">' + result[i].AreaCuisineRestaurants+ '</td>' +                                              
+                                                      '</tr>'
+                                        );
+                                    }
+                                    if(result[i].KPItype=='NPSResponse'){
+                                        //alert('yayay');
+                                        tr5.append('<tr><td class="slds-size--1-of-5" style="word-wrap: break-word; white-space:normal;font-size:12px">' + result[i].NPSType+  '</td>' +
+                                                      '<td class="slds-size--1-of-5" style="word-wrap: break-word; white-space:normal;font-size:12px">' + result[i].NPSDate+ '</td>' +
+                                                      '<td class="slds-size--1-of-5" style="word-wrap: break-word; white-space:normal;font-size:12px">' + result[i].NPSScore+ '</td>' +
+                                                      '<td class="slds-size--1-of-5" style="word-wrap: break-word; white-space:normal;font-size:12px">' + result[i].NPSContact+ '</td>' +
+                                                      '<td class="slds-size--1-of-5" style="word-wrap: break-word; white-space:normal;font-size:12px">' + result[i].NPSReason+'</td>' +
+                                                      '</tr>'+
+                                                      '<tr>'+
+                                                      '<td class="slds-size--1-of-1" colspan="5" style="word-wrap: break-word; white-space:normal"><span class="slds-section__title" style="text-decoration:underline;font-size:12px"> NPS Feedback:</span>  ' + result[i].NPSFeedback+ '</td>' +                                                                                          
+                                                      '</tr>'
+                                        );
+                                    }
+
+
+
+                                        i++;
+                                       
+                                    });                            
+                                    
+                             
+                                } 
+                                else if (event.type === 'exception') {
+                                    document.getElementById("responseErrors").innerHTML = event.message + "<br/>\n<pre>" + event.where + "</pre>";
+                                }else {
+                                    document.getElementById("responseErrors").innerHTML = event.message;
+                                }
+                            },
+                            {escape: true}
+                    );
+                    //alert({!$User.ID});
+                    
+                    
+
+                    
+                    
+                        
+                    
+
+
+                   
+                    
+                
+
+                });
+                
+                function toggleTable(tableID) {
+                
+                    j$(tableID).toggle();
+                    if(j$(tableID+'sec').text()=="hide"){
+                    j$(tableID+'sec').text("show");
+                   }
+                   else
+                   j$(tableID+'sec').text("hide");
+                    
+                    // Remove from list in backend
+                }
+                
+                function parseString(rowVal) {
+                    if(typeof rowVal === "undefined")
+                        return "";
+                     else 
+                         return rowVal;
+                  }
+
+
+        </script>
+    </html>
+    <body>
+            
+       
+            <div class="slds" style="height:300px">
+            
+            
+            
+           
+                <div class="slds-card__header slds-grid">
+                    <div class="slds-media slds-media--center slds-has-flexi-truncate">
+                        
+                            <h2 class="slds-text-heading--small slds-truncate"  style="font-size:12px"><b>Order Failure History</b></h2>&nbsp;&nbsp;<a style="font:5px"  onclick="toggleTable('#failureKPI')" id="failureKPIsec">hide</a>
+                        </div>        
+                    </div> 
+                    <br/>      
+                
+                    
+                <table class="slds-table slds-table--bordered" style="width:100%; white-space:normal">
+                    <thead>
+                        
+                            <th scope="col" class="slds-size--1-of-6" style="font-size:12px;"><b>OrderId</b></th>
+                            <th scope="col" class="slds-size--1-of-6" style="font-size:12px;"><b>OrderStatus</b></th>
+                            <th scope="col" class="slds-size--1-of-6" style="font-size:12px;"><b>OrderDate</b></th>
+                            <th scope="col" class="slds-size--1-of-6" style="font-size:12px"><b>OrderAmount</b></th>
+                            <th scope="col" class="slds-size--1-of-6" style="font-size:12px"><b>Postcode</b></th>
+                            <th scope="col" style="word-wrap: break-word; white-space:normal;font-size:12px" class="slds-size--1-of-6" ><b>Reason</b></th>
+                            
+                            
+                        
+                    </thead>
+                   </table>
+                   <br/>
+                  
+                   <div class="slds-scrollable--y">
+                   <table class="slds-table slds-table--bordered" style="width:100%; white-space:normal">
+                    <tbody id="failureKPI">
+                        
+                    </tbody>
+                </table>
+                </div>
+              
+                <br/>
+                              <div class="slds-card__header slds-grid">
+                    <div class="slds-media slds-media--center slds-has-flexi-truncate">
+                       
+                            <h2 class="slds-text-heading--small slds-truncate"  style="font-size:12px"><b>Account Reviews</b></h2>&nbsp;&nbsp;<a style="font:5px"  onclick="toggleTable('#reviewKPI')" id="reviewKPIsec">hide</a>
+                        </div>        
+                    </div>       
+                    <br/>
+                
+                    
+                <table class="slds-table slds-table--bordered" style="width:100%; white-space:normal" >
+                    <thead>
+                        
+                            <th scope="col" style="white-space:normal;font-size:12px" class="slds-size--1-of-6"><b>OrderDate</b></th>
+                            <th scope="col" style="white-space:normal;font-size:12px" class="slds-size--1-of-6"><b>OrderId</b></th>
+                            <th scope="col" style="white-space:normal;font-size:12px" class="slds-size--1-of-6"><b>RatingQuality</b></th>
+                            <th scope="col" style="white-space:normal;font-size:12px" class="slds-size--1-of-6"><b>RatingSpeed</b></th>
+                            <th scope="col" style="white-space:normal;font-size:12px" class="slds-size--1-of-6"><b>RatingValue</b></th>
+                           <!-- <th scope="col" style="white-space:normal" class="slds-size--1-of-6">ReviewComment</th>-->
+                            <!--<th></th>-->
+                        
+                    </thead>
+
+                    </table>
+                    <div class="slds-scrollable--y">
+                    <table id="reviews" class="slds-table slds-table--bordered">
+                    <tbody id="reviewKPI">
+                        
+                    </tbody>
+                </table>
+            </div>
+           
+            <br/><br/>
+
+
+
+          
+                <div class="slds-card__header slds-grid">
+                    <div class="slds-media slds-media--center slds-has-flexi-truncate">
+                        
+                            <h2 class="slds-text-heading--small slds-truncate"  style="font-size:12px"><b>Contact Reasons</b></h2>&nbsp;&nbsp;<a style="font:5px"  onclick="toggleTable('#contactKPI')" id="contactKPIsec">hide</a>
+                        </div>        
+                    </div>       
+                <br/>
+                    
+                <table class="slds-table slds-table--bordered" style="width:100%; white-space:normal; background-color:white">
+                    <thead style="width:95%">
+                        
+                            <th scope="col" style="white-space:normal;font-size:12px" class="slds-size--1-of-5"><b>ContactDate</b></th>
+                            <th scope="col" style="white-space:normal;font-size:12px" class="slds-size--1-of-5"><b>ContactFrom</b></th>
+                            <th scope="col" style="white-space:normal;font-size:12px" class="slds-size--1-of-5"><b>ContactType</b></th>
+                            <th scope="col" style="white-space:normal;font-size:12px" class="slds-size--1-of-5"><b>ContactAgent</b></th>
+                            <th scope="col" style="white-space:normal;font-size:12px" class="slds-size--1-of-5"><b>OrderId</b></th>
+                            <!--<th scope="col" style="word-wrap: break-word; white-space:normal" class="slds-size--1-of-6">ContactNotes</th>-->
+                            <!--<th></th>-->
+                            
+                        
+                    </thead>
+                    </table>
+                    <div class="slds-scrollable--y">
+                    <table class="slds-table slds-table--bordered" style="width:100%; white-space:normal">
+                    <tbody id="contactKPI">
+                        
+                    </tbody>
+                </table>
+            </div>
+           
+            <br/>
+
+                
+                <div class="slds-card__header slds-grid">
+                    <div class="slds-media slds-media--center slds-has-flexi-truncate">
+                        
+                            <h2 class="slds-text-heading--small slds-truncate"  style="font-size:12px"><b>Delivery Area</b></h2>&nbsp;&nbsp;<a style="font:5px"  onclick="toggleTable('#areaKPI')" id="areaKPIsec">hide</a>
+                        </div>
+                       
+                              
+                    </div> 
+                    <br/>      
+                
+                     <div style="font-size:12px">Area info: <span id="areaInfo"></span> </div> 
+                <table class="slds-table slds-table--bordered" style="width:100%; white-space:normal">
+                    <thead>
+                        
+                            <th scope="col" style="word-wrap: break-word; white-space:normal;font-size:12px" class="slds-size--1-of-13"><b>Short code</b></th>
+                            <th scope="col" style="word-wrap: break-word; white-space:normal;font-size:12px" class="slds-size--1-of-13"><b>Res Coverage</b></th>
+                            <th scope="col" style="word-wrap: break-word; white-space:normal;font-size:12px" class="slds-size--1-of-13"><b>Res Orders</b></th>
+                            <th scope="col" style="word-wrap: break-word; white-space:normal;font-size:12px" class="slds-size--1-of-13"><b>Res Orders %</b></th>
+                            <th scope="col" style="word-wrap: break-word; white-space:normal;font-size:12px" class="slds-size--1-of-13"><b>Area Orders</b></th>
+                            <th scope="col" style="word-wrap: break-word; white-space:normal;font-size:12px" class="slds-size--1-of-13"><b>Area Res</b></th>
+                            <th scope="col" style="word-wrap: break-word; white-space:normal;font-size:12px" class="slds-size--1-of-13"><b>Area OpR</b></th>
+                            <th scope="col" style="word-wrap: break-word; white-space:normal;font-size:12px" class="slds-size--1-of-13"><b>Area YoY</b></th>
+                            <th scope="col" style="word-wrap: break-word; white-space:normal;font-size:12px" class="slds-size--1-of-13"><b>Area Revenue Avg</b></th>
+                            <th scope="col" style="word-wrap: break-word; white-space:normal;font-size:12px" class="slds-size--1-of-13"><b>Area Customers</b></th>
+                            <th scope="col" style="word-wrap: break-word; white-space:normal;font-size:12px" class="slds-size--1-of-13"><b>Area Basket</b></th>
+                            <th scope="col" style="word-wrap: break-word; white-space:normal;font-size:12px" class="slds-size--1-of-13"><b>Area Cuisine Orders</b></th>
+                            <th scope="col" style="word-wrap: break-word; white-space:normal;font-size:12px" class="slds-size--1-of-13"><b>Area Cuisine Res</b></th>
+                            
+                        
+                    </thead>
+                   </table>
+                   <div class="slds-scrollable--y">
+                   <table class="slds-table slds-table--bordered" style="width:100%; white-space:normal">
+                    <tbody id="areaKPI">
+                        
+                    </tbody>
+                </table>
+                </div>
+                
+                <br/>
+                
+                <div class="slds-card__header slds-grid">
+                    <div class="slds-media slds-media--center slds-has-flexi-truncate">
+                        
+                            <h2 class="slds-text-heading--small slds-truncate" style="font-size:12px"><b>NPS Response</b></h2>&nbsp;&nbsp;<a style="font:5px"  onclick="toggleTable('#npsKPI')" id="npsKPIsec">hide</a>
+                        </div>        
+                    </div> 
+                    <br/>      
+                
+                    
+                <table class="slds-table slds-table--bordered" style="width:100%; white-space:normal">
+                    <thead>
+                        
+                            <th scope="col" style="word-wrap: break-word; white-space:normal;font-size:12px" class="slds-size--1-of-5"><b>NPS Type</b></th>
+                            <th scope="col" style="word-wrap: break-word; white-space:normal;font-size:12px" class="slds-size--1-of-5"><b>NPS Date</b></th>
+                            <th scope="col" style="word-wrap: break-word; white-space:normal;font-size:12px" class="slds-size--1-of-5"><b>NPS Score</b></th>
+                            <th scope="col" style="word-wrap: break-word; white-space:normal;font-size:12px" class="slds-size--1-of-5"><b>NPS Contact</b></th>
+                            <th scope="col" style="word-wrap: break-word; white-space:normal;font-size:12px" class="slds-size--1-of-5"><b>NPS Reason</b></th>
+                            <!--<th scope="col" style="word-wrap: break-word; white-space:normal">NPS Feedback</th>-->
+                            
+                            
+                        
+                    </thead>
+                   </table>
+                   <div class="slds-scrollable--y">
+                   <table class="slds-table slds-table--bordered" style="width:100%; white-space:normal">
+                    <tbody id="npsKPI">
+                        
+                    </tbody>
+                </table>
+                </div>
+           </div>
+    
+             
+
+
+
+            
+    </body>
+ 
+</apex:page>

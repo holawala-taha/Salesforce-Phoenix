@@ -1,0 +1,501 @@
+<apex:page controller="CtrRestaurantQuality" showHeader="false" standardStylesheets="false" sidebar="false" applyHtmlTag="false" applyBodyTag="false" docType="html-5.0">
+<html
+xmlns="http://www.w3.org/2000/svg"
+xmlns:xlink="http://www.w3.org/1999/xlink"
+xmlns:v-once="http://vue/fake"
+xmlns:v-html="http://vue/fake"
+xmlns:v-bind="http://vue/fake"
+xmlns:v-if="http://vue/fake"
+xmlns:v-on="http://vue/fake"
+xmlns:v-model="http://vue/fake"
+xmlns:v-cloak="http://vue/fake">
+<head>
+    <title>Restaurant Quality</title>
+    <link rel="stylesheet" type="text/css" href="{!URLFOR($Resource.slds222, 'assets/styles/salesforce-lightning-design-system-vf.css')}"/>
+    <style type="text/css">
+        [v-cloak] {
+            display: none !important;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- restaurant table -->
+    <div id="app" class="slds" v-cloak="">
+
+        <!-- country selection -->
+        <div v-if="countrySelectionIsNeeded" class="slds-grid slds-wrap slds-box slds-box-small slds-theme--shade">
+            <div class="slds-col slds-size--1-of-1 slds-align--absolute-center">
+                <dependant-checkboxes legend="Please select at least one Country" v-bind:checkboxes="countryBrandOptions" v-on:selected-country-brand="setCountryBrand" /> 
+            </div>            
+        </div>
+
+        <!-- restaurant list table  -->
+        <div v-if="displayRestaurantsList">
+            <div class="slds-page-header" role="banner">
+                <!-- action buttons -->
+                <div class="slds-button-group" html-role="group">
+                    <button type="button" class="slds-button slds-button--brand" v-on:click="assignRestaurant">Take Ownership</button>
+                </div>
+            </div>
+
+            <table is="data-table" v-bind:headers="headers" v-bind:rows="rows"></table>
+        </div>
+        
+        <spinner v-bind:open="loading"></spinner>
+        <error-handler v-bind:message="error.msg" v-bind:type="error.type"></error-handler>
+    </div>
+
+    <script src="/support/console/38.0/integration.js" type="text/javascript"></script>
+    <script type="text/javascript" src="{!URLFOR($Resource.DHHConsoleToolkit, 'js/ConsoleToolkit.js')}"></script>
+    <script src="{!URLFOR($Resource.Vue)}"></script>
+    <c:VueCommonComponents />
+    <script type="text/javascript">
+        Visualforce.remoting.timeout = 120000;
+        
+        var DHH = new DHHConsoleToolkit();
+
+        Vue.component("dependant-checkboxes", {
+            props: ["legend", "checkboxes"],
+            data: function() {
+                return {
+                    selectedValue: ""
+                };
+            },
+            methods: {
+                onClick: function(value) {
+                    if (this.selectedValue == value) {
+                        this.selectedValue = "";
+                    } else {
+                        this.selectedValue = value;
+                    }
+
+                    this.$emit("selected-country-brand", this.selectedValue);
+                }
+            },
+            template: `<fieldset class="slds-form-element">
+                            <legend class="slds-form-element__legend slds-form-element__label"> {{legend}} </legend>
+                            <div class="slds-form-element__control">
+                                <div class="slds-checkbox--button-group">
+                                    <dep-checkbox 
+                                        v-for="chkb in checkboxes"
+                                        v-bind:value="chkb.value"
+                                        v-bind:label="chkb.label"
+                                        v-bind:masterValue="selectedValue"
+                                        v-on:clicked="onClick">
+                                    </dep-checkbox>
+                                </div>
+                            </div>
+                       </fieldset>`
+        });
+
+        Vue.component("dep-checkbox", {
+            props: ["value", "label", "masterValue"],
+            methods: {
+                onClick: function() {
+                    this.$emit("clicked", this.value);
+                }
+            },
+            watch: {
+                masterValue: function() {
+                    document.querySelector("input.dep-checkbox[id='" + this.label + "']").checked = (this.masterValue == this.value);
+                }
+            },
+            template: `<span class="slds-button slds-checkbox--button" v-bind:for="label">
+                        <input type="checkbox" v-bind:id="label" class="dep-checkbox" />
+                        <label class="slds-checkbox--button__label" v-bind:for="label" v-on:click.prevent="onClick">
+                          <span class="slds-checkbox--faux">{{ label }}</span>
+                        </label>
+                      </span>`
+        });
+
+        // render a table
+        Vue.component("data-table", {
+            props: ["headers", "rows"],
+            template: `<table 
+                            class="slds-table slds-table--bordered slds-table--cell-buffer">
+                            
+                            <table-header v-bind:headers="headers"></table-header>
+
+                            <table-body v-bind:rows="rows"></table-body>
+                       </table>`
+        });
+
+        // render thead element of a table
+        Vue.component("table-header", {
+            props: ["headers"],
+            template: `<thead>
+                            <tr class="slds-text-title--caps">
+                                <cell-header 
+                                    v-for="(header, index) in headers" 
+                                    scope="col"
+                                    v-bind:value="header"
+                                    v-bind:index="index">
+                                </cell-header>   
+                            </tr>
+                        </thead>`
+        });
+
+        // render tbody element of a table
+        Vue.component("table-body", {
+            props: ["rows"],
+            template: `<tbody>
+                            <table-row 
+                                v-for="(row, index) in rows"
+                                v-bind:row="row"
+                                v-bind:index="index">
+                            </table-row> 
+                        </tbody>`
+        });
+        
+        Vue.component("table-row", {
+            props: ["row", "index"],
+            computed: {
+                headerField: function() {
+                    return this.row.fields.reduce(function(acc, fld) {
+                        if (!acc) {
+                            acc = fld.isHeader ? fld : undefined;
+                        }
+
+                        return acc;
+                    }, undefined);
+                },
+                nonHeaderFields: function() {
+                    return this.row.fields.filter(function (fld) {
+                        return !fld.isHeader;
+                    });
+                }
+            },
+            methods: {
+                headerClicked: function() {
+                    openRestaurantKPIsDetail(this.row.data);
+                },
+                cellClicked: function(fieldKey) {
+                    openRestaurantDetail(this.row.data);
+                }
+            },
+            template: `<tr>
+                            <cell-header
+                                scope="row"
+                                v-bind:value="headerField.value"
+                                v-bind:clickable="headerField.isClickable"
+                                v-on:clicked="headerClicked">
+                            </cell-header>
+
+                            <cell
+                                v-for="(field, index) in nonHeaderFields"
+                                v-bind:value="field.value"
+                                v-bind:fldName="field.key"
+                                v-bind:clickable="field.isClickable"
+                                v-on:clicked="cellClicked">
+                            </cell>
+                       </tr>`
+        });
+
+        Vue.component("cell", {
+            props: ["value", "fldName", "clickable"],
+            methods: {
+                onClick: function() {
+                    this.$emit("clicked", {fld: this.fldName});
+                }
+            },
+            template: `<td>
+                            <div
+                                v-bind:title="value" 
+                                class="slds-truncate">
+                                    <a
+                                        v-if="clickable" 
+                                        href="#" 
+                                        v-on:click.prevent="onClick">
+                                        {{ value }}
+                                    </a>
+                                    <span v-else> {{ value }} </span>
+                            </div>
+                      </td>`
+        });
+
+        // render a th element 
+        Vue.component("cell-header", {
+            props: ["value", "index", "scope", "clickable"],
+            methods: {
+                onClick: function() {
+                    // emit clicked event sending the index 
+                    this.$emit("clicked", {index: this.index});
+                }
+            },
+            template: `<th v-bind:scope="scope">
+                            <div 
+                                class="slds-truncate" 
+                                v-bind:title="value">
+                                    <a v-if="clickable" 
+                                        href="#" v-on:click.prevent="onClick">
+                                        {{ value }}
+                                    </a>
+                                    <span v-else>{{ value }}</span>
+                            </div>
+                       </th>`
+        });
+
+        var rootCmp = new Vue({
+            el: "#app",
+            data: {
+                headers: [
+                    "Restaurant Id",
+                    "Restaurant Name",
+                    "Online Status",
+                    "Restaurant grade",
+                    "Reason",
+                    "Last Call By",
+                    "Last Call Date",
+                    "Last Call Reason"
+                ],
+                rows: [],
+                loading: false,
+                countryBrand: "",
+                differentCountryBrands: [],
+                countryBrandOptions: [],
+                error: {}
+            },
+            created: function() {
+                // retrieves available country brands
+                this.loading = true;
+
+                var self = this;
+
+                Visualforce.remoting.Manager.invokeAction(
+                    '{!$RemoteAction.CtrRestaurantQuality.getCountryBrandCodesPerCurrentUser}',
+                    function handleRemoteResponse (result, event) {
+                        self.loading = false;
+
+                        // Checks event status
+                        if (!event.status) {
+                            console.error('Error is: ', event.message)
+                            self.error = {
+                                msg: "Unexpected error occurred, unable to display restaurant list",
+                                type: "error"
+                            }
+                            return;
+                        }
+                
+                        // Check result list
+                        if (!result) {
+                            console.log('Empty result');
+                            self.error = {
+                                msg: "There are no available country for restaurant quality tool",
+                                type: "warning"
+                            };
+                            return;
+                        }
+
+                        // set the country brand values
+                        for (var country in result) {
+
+                            // add option to select list
+                            self.countryBrandOptions.push({
+                                label: country,
+                                value: result[country]
+                            });
+
+                            // populate code's set
+                            if (self.differentCountryBrands.indexOf(result[country]) < 0) {
+                                self.differentCountryBrands.push(result[country]);
+                            }
+                        }
+
+                        // sets default country brand
+                        if (self.differentCountryBrands.length == 1) {
+                            self.countryBrand = self.differentCountryBrands[0];
+                        }
+                    }, {
+                        escape: false
+                    } 
+                );
+            },
+            methods: {
+                assignRestaurant: function() {
+                    if (!this.countryBrand) {
+                        return;
+                    }
+
+                    this.loading = true;
+
+                    var self = this;
+
+                    Visualforce.remoting.Manager.invokeAction(
+                        '{!$RemoteAction.CtrRestaurantQuality.assignFirst}',
+                        this.countryBrand,
+                        function(result, event) {
+
+                            self.loading = false;
+
+                            // Checks event status
+                            if (!event.status || !result) {
+                                console.error('Error is: ', event.message)
+                                self.error = {
+                                    msg: "Unexpected error occurred, unable to assign restaurant",
+                                    type: "Error"
+                                };
+                                return;
+                            }
+
+                            // Check result list
+                            if (result.inError) {
+                                console.log('Empty result');
+                                self.error = {
+                                    msg: result.response,
+                                    type: "Error"
+                                };
+                                return;
+                            }
+
+                            var response = JSON.parse(result.response);
+
+                            openRestaurantKPIsDetail(response.data);
+
+                        }, {
+                            escape: false
+                        }
+                    );
+                },
+                getRestaurants: function() {
+                    if (!this.countryBrand) {
+                        return;
+                    }
+
+                    this.loading = true;
+
+                    var self = this;
+
+                    Visualforce.remoting.Manager.invokeAction(
+                        "{!$RemoteAction.CtrRestaurantQuality.getRestaurants}",
+                        this.countryBrand,
+                        function(result, event) {
+                            self.loading = false;
+
+                            if (!event.status || !result) {
+                                console.error("error occurred event is:", event, "result is:", result);
+                                self.error = {
+                                    msg: "Unexpected error occurred, unable to retrieve restaurants list.",
+                                    type: "Error"
+                                };
+                                return;
+                            }
+
+                            if (result.inError) {
+                                console.error("result is error, result is:", result);
+                                self.error = {
+                                    msg: result.response,
+                                    type: "Error"
+                                };
+                                return;
+                            }
+
+                            // everything should be fine here
+                            var response = JSON.parse(result.response);
+
+                            if (!response.data.restaurants) {
+                                return; // no restaurants
+                            }
+
+                            self.rows = response.data.restaurants.map(function(rest) {
+                                var isAssignedToUser = (rest.assigned_to === "{!$User.Username}");
+                                return {
+                                    data: rest,
+                                    fields: [{
+                                        value: rest.id,
+                                        isHeader: true,
+                                        isClickable: isAssignedToUser,
+                                        key: "id"
+                                    }, {
+                                        value: rest.name,
+                                        isClickable: true,
+                                        key: "name"
+                                    }, {
+                                        value: rest.status
+                                    }, {
+                                        value: rest.grading
+                                    }, {
+                                        value: rest.reason
+                                    }, {
+                                        value: rest.last_call_by
+                                    }, {
+                                        value: rest.last_call_date
+                                    }, {
+                                        value: rest.last_call_reason
+                                    }]
+                                }
+                            });
+                        }, {
+                            escape: false
+                        }
+                    );
+                },
+                setCountryBrand: function(value) {
+                    this.countryBrand = value;
+                }
+            },
+            computed: {
+                countrySelectionIsNeeded: function() {
+                    // when is empty (on page load) or has more than one
+                    return this.differentCountryBrands.length != 1;
+                },
+                displayRestaurantsList: function() {
+                    return this.countryBrand && this.rows.length;
+                }
+            },
+            watch: {
+                countryBrand: function() {
+                    this.rows = []; // clear rows
+                    if (this.countryBrand) {
+                        this.getRestaurants();
+                    }
+                }
+            }
+        });
+
+        /**
+        called when user press on the restaurant id
+        will take the user to the restaurant kpi page
+        @param restaurant elemet
+        */
+        function openRestaurantKPIsDetail(restaurant) {
+
+            var kpiBaseUrl = "{!URLFOR($Page.RestaurantKPI)}";
+
+            // add the record id to the url
+            if (kpiBaseUrl.includes("?")) {
+                kpiBaseUrl += "&id=" + restaurant.sf_restaurant_id;
+            } else {
+                kpiBaseUrl += "?id=" + restaurant.sf_restaurant_id;
+            }
+
+            // open new primary tab or override current window 
+            if (sforce.console.isInConsole()) {
+                DHH.openPrimaryTab("/" + restaurant.sf_restaurant_id, restaurant.name || "", function(err, res) {
+                    if (err) return;
+                    DHH.openSubTab(res, kpiBaseUrl, "");
+                });
+            } else {
+                window.location.href = kpiBaseUrl;
+            }
+        }
+
+        /**
+        called when user press on restaurant name, open restaurant page
+        in a new tab
+        */
+        function openRestaurantDetail(restaurant) {
+            var url = "/" + restaurant.sf_restaurant_id;
+            // open new primary tab or override current window 
+            if (sforce.console.isInConsole()) {
+                DHH.openPrimaryTab(url, restaurant.name);
+            } else {
+                window.location.href = url;
+            }
+        }
+
+    </script>
+</body>
+</html>
+
+</apex:page>

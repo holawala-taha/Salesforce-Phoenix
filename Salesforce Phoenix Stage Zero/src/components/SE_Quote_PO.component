@@ -1,0 +1,91 @@
+<apex:component controller="CtrCreateQuote" access="global" >
+   <apex:attribute name="acct" type="String" description="Placeholder" assignTo="{!acctId}"/>
+   <apex:attribute name="oppQ" type="String" description="Placeholder" assignTo="{!oppQId}"/>
+   <head>
+     <style type="text/css" media="print">
+            @page {
+                      @top-center {
+                            content: element(header);
+                    }
+                    @bottom-left {
+                          content: element(footer);
+                    }
+                 }
+                          div.header {
+                           padding: 10px;
+                           position: running(header);
+                }
+            div.footer {
+                     display: block;
+                  padding: 5px;
+                    position: running(footer);
+           }
+                          .pagenumber:before {
+                             content: counter(page);
+            }
+                        .pagecount:before {
+                  content: counter(pages);
+             }
+      </style>
+   </head>
+   <div class = "header">
+   	<apex:image id="headerImage" value="{!$Resource.Delivery_Hero_Sweden_Header}" width = "100%"/>
+   </div><br/><br/>
+   <div>
+	  <h1 style ="margin:0%;line-height:10px">Beställningsformulär / Orderbekräftelse</h1><br />
+	  <p style ="margin:0%;line-height:10px;font-size:12pt">
+	  	Orderdatum
+	  	<span>
+	  	<apex:outputText value="{0,date,yyyy-MM-dd}">
+       		<apex:param value="{! NOW() }" />
+   		</apex:outputText>
+   		</span>
+	  </p>
+	</div>
+	<div style="margin:30px;display:inline-block;float:right;">
+		<span style="font-size:12pt;float:right;">{!accountWrapper.restaurantName}</span><br/>
+		<span style="font-size:12pt;float:right;">{!accountWrapper.restaurantAddress}</span><br/>
+		<span style="font-size:12pt;float:right;">{!accountWrapper.addressPostal}&nbsp;{!accountWrapper.addressCity}</span>
+	</div>
+	<div class="clearboth" style="clear:both;"/><br />
+
+		<table width = "100%" style="border-collapse: collapse;">			
+			<tr>
+				<td style="border-bottom:1px solid black;">Produkt</td>
+				<td style="border-bottom:1px solid black;">Antal</td>
+				<td style="border-bottom:1px solid black;">A-Pris</td>
+				<td style="border-bottom:1px solid black;">Rabatt/st</td>
+				<td style="border-bottom:1px solid black;">Summa</td>
+			</tr>
+			<apex:repeat var = "li" value= "{!listLineItems}">
+				<tr>
+					<td>{!li.name}</td>
+					<td>{!li.Quantity__c}</td>
+					<td>{!li.Listed_price__c}</td>
+					<td>{!li.Discount__c}</td>
+					<td>{!li.Total_Amount__c}</td>
+				</tr>
+			</apex:repeat>
+		</table>
+		
+		<div width = "60%" style="clear:both;float:left;position:fixed;bottom:0;">
+			<div style = "border-bottom:0.5px solid black;width:80%;">
+				<b>Villkor</b>
+			</div>
+			<div>
+				<p><b>Pris</b> - Alla priser är exklusive moms</p>
+				<p><b>Frakt</b> - Vi bjuder på frakten (värde 150kr)</p>
+				<p><b>Retur</b> - Du får lämna tillbaka varorna om de returneras inom 14 dagar
+					från beställningsdatum. Vi debiterar då endast 150kr för vår frakt. För
+					takskyltar tillkommer då 895kr i administrativ avgift. Du står för frakten
+					tillbaka till oss.Om varorna som returneras inte är i nyskick debiteras fullt
+					pris.
+				</p>
+			</div>
+			<div class="footer">
+	        	<apex:image id="footerImage" value="{!$Resource.Delivery_Hero_Sweden_Footer}" width = "100%"/>        
+	        </div>
+		</div>
+		
+	
+</apex:component>
